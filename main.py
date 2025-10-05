@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 import logging
@@ -47,54 +48,94 @@ user_data = {}
 # Класс для управления клавиатурами
 class KeyboardManager:
     @staticmethod
-    def get_categories_keyboard(platform: Platform):
+    def get_initial_keyboard(platform: Platform):
         if platform == Platform.TELEGRAM:
             keyboard = [
                 [InlineKeyboardButton("Кухня", callback_data="кухня")],
                 [InlineKeyboardButton("Шкаф", callback_data="шкаф")],
                 [InlineKeyboardButton("Гардеробная", callback_data="гардеробная")],
+                [InlineKeyboardButton("Прихожая", callback_data="прихожая")],
+                [InlineKeyboardButton("Мебель для ванной", callback_data="ванная")],
                 [InlineKeyboardButton("Другая мебель", callback_data="другое")],
+                [InlineKeyboardButton("Свяжитесь со мной", callback_data="связаться_со_мной")]
             ]
             return InlineKeyboardMarkup(keyboard)
         else:  # VK
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🍳 Кухня",
-                            "payload": "{\"command\": \"кухня\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🍳 Кухня",
+                                "payload": "{\"command\": \"кухня\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🚪 Шкаф",
-                            "payload": "{\"command\": \"шкаф\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🚪 Шкаф",
+                                "payload": "{\"command\": \"шкаф\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "👔 Гардеробная",
+                                "payload": "{\"command\": \"гардеробная\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "👔 Гардеробная",
-                            "payload": "{\"command\": \"гардеробная\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🛋 Прихожая",
+                                "payload": "{\"command\": \"прихожая\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🛁 Мебель для ванной",
+                                "payload": "{\"command\": \"ванная\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🛋 Другая мебель",
-                            "payload": "{\"command\": \"другое\"}"
-                        },
-                        "color": "secondary"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🛋 Другая мебель",
+                                "payload": "{\"command\": \"другое\"}"
+                            },
+                            "color": "secondary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📞 Свяжитесь со мной",
+                                "payload": "{\"command\": \"связаться_со_мной\"}"
+                            },
+                            "color": "positive"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
+    def get_categories_keyboard(platform: Platform):
+        # This method is now redundant, get_initial_keyboard will be used for categories
+        return KeyboardManager.get_initial_keyboard(platform)
 
     @staticmethod
     def get_actions_keyboard(platform: Platform):
@@ -107,22 +148,24 @@ class KeyboardManager:
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📞 Консультация",
-                            "payload": "{\"command\": \"консультация\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📞 Консультация",
+                                "payload": "{\"command\": \"консультация\"}"
+                            },
+                            "color": "positive"
                         },
-                        "color": "positive"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💬 Написать в ТГ",
-                            "payload": "{\"command\": \"написать_тг\"}"
-                        },
-                        "color": "primary"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💬 Написать в ТГ",
+                                "payload": "{\"command\": \"написать_тг\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
@@ -140,30 +183,34 @@ class KeyboardManager:
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📞 По телефону",
-                            "payload": "{\"command\": \"по_телефону\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📞 По телефону",
+                                "payload": "{\"command\": \"по_телефону\"}"
+                            },
+                            "color": "positive"
                         },
-                        "color": "positive"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💬 Сообщение в Telegram",
-                            "payload": "{\"command\": \"сообщение_тг\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔄 Начать заново",
-                            "payload": "{\"command\": \"начать_заново\"}"
-                        },
-                        "color": "secondary"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💬 Сообщение в Telegram",
+                                "payload": "{\"command\": \"сообщение_тг\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔄 Начать заново",
+                                "payload": "{\"command\": \"начать_заново\"}"
+                            },
+                            "color": "secondary"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
@@ -207,96 +254,250 @@ class KeyboardManager:
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📐 Угловая",
-                            "payload": "{\"command\": \"кухня_угловая\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📐 Угловая",
+                                "payload": "{\"command\": \"кухня_угловая\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📏 Прямая",
-                            "payload": "{\"command\": \"кухня_прямая\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📏 Прямая",
+                                "payload": "{\"command\": \"кухня_прямая\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔄 П-образная",
+                                "payload": "{\"command\": \"кухня_п_образная\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔄 П-образная",
-                            "payload": "{\"command\": \"кухня_п_образная\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🏝 С островом",
-                            "payload": "{\"command\": \"кухня_остров\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_категории\"}"
-                        },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🏝 С островом",
+                                "payload": "{\"command\": \"кухня_остров\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_категории\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
 
     @staticmethod
-    def get_size_keyboard(platform: Platform):
+    def get_cabinet_type_keyboard(platform: Platform):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Точные", callback_data="размер_точные")],
-                [InlineKeyboardButton("Приблизительные", callback_data="размер_приблизительные")],
-                [InlineKeyboardButton("Не знаю", callback_data="размер_не_знаю")],
-                [InlineKeyboardButton("↩️ Назад", callback_data="назад_тип")]
+                [InlineKeyboardButton("Распашной", callback_data="шкаф_распашной")],
+                [InlineKeyboardButton("Купе", callback_data="шкаф_купе")],
+                [InlineKeyboardButton("↩️ Назад", callback_data="назад_категории")]
             ]
             return InlineKeyboardMarkup(keyboard)
         else:  # VK
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📏 Точные размеры",
-                            "payload": "{\"command\": \"размер_точные\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🚪 Распашной",
+                                "payload": "{\"command\": \"шкаф_распашной\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "positive"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📐 Приблизительные",
-                            "payload": "{\"command\": \"размер_приблизительные\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🚶 Купе",
+                                "payload": "{\"command\": \"шкаф_купе\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_категории\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
+                ]
+            }
+            return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
+    def get_hallway_type_keyboard(platform: Platform):
+        if platform == Platform.TELEGRAM:
+            keyboard = [
+                [InlineKeyboardButton("Прямая", callback_data="прихожая_прямая")],
+                [InlineKeyboardButton("Угловая", callback_data="прихожая_угловая")],
+                [InlineKeyboardButton("↩️ Назад", callback_data="назад_категории")]
+            ]
+            return InlineKeyboardMarkup(keyboard)
+        else:  # VK
+            keyboard = {
+                "inline": True,
+                "buttons": [
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📏 Прямая",
+                                "payload": "{\"command\": \"прихожая_прямая\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "❓ Не знаю",
-                            "payload": "{\"command\": \"размер_не_знаю\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📐 Угловая",
+                                "payload": "{\"command\": \"прихожая_угловая\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_категории\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
+                ]
+            }
+            return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
+    def get_bathroom_type_keyboard(platform: Platform):
+        if platform == Platform.TELEGRAM:
+            keyboard = [
+                [InlineKeyboardButton("Тумба под раковину", callback_data="ванная_тумба")],
+                [InlineKeyboardButton("Шкаф-пенал", callback_data="ванная_пенал")],
+                [InlineKeyboardButton("Зеркало с подсветкой", callback_data="ванная_зеркало")],
+                [InlineKeyboardButton("↩️ Назад", callback_data="назад_категории")]
+            ]
+            return InlineKeyboardMarkup(keyboard)
+        else:  # VK
+            keyboard = {
+                "inline": True,
+                "buttons": [
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🚰 Тумба под раковину",
+                                "payload": "{\"command\": \"ванная_тумба\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "secondary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_тип\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🧺 Шкаф-пенал",
+                                "payload": "{\"command\": \"ванная_пенал\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💡 Зеркало с подсветкой",
+                                "payload": "{\"command\": \"ванная_зеркало\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_категории\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
+                ]
+            }
+            return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
+    def get_size_keyboard(platform: Platform, back_callback: str = "назад_тип"):
+        if platform == Platform.TELEGRAM:
+            keyboard = [
+                [InlineKeyboardButton("Точные", callback_data="размер_точные")],
+                [InlineKeyboardButton("Приблизительные", callback_data="размер_приблизительные")],
+                [InlineKeyboardButton("Не знаю", callback_data="размер_не_знаю")],
+                [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
+            ]
+            return InlineKeyboardMarkup(keyboard)
+        else:  # VK
+            keyboard = {
+                "inline": True,
+                "buttons": [
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📏 Точные размеры",
+                                "payload": "{\"command\": \"размер_точные\"}"
+                            },
+                            "color": "positive"
+                        },
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📐 Приблизительные",
+                                "payload": "{\"command\": \"размер_приблизительные\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "❓ Не знаю",
+                                "payload": "{\"command\": \"размер_не_знаю\"}"
+                            },
+                            "color": "secondary"
+                        },
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": f"{{\"command\": \"{back_callback}\"}}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
@@ -315,41 +516,46 @@ class KeyboardManager:
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🌳 ЛДСП",
-                            "payload": "{\"command\": \"материал_лдсп\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🌳 ЛДСП",
+                                "payload": "{\"command\": \"материал_лдсп\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "✨ АГТ",
-                            "payload": "{\"command\": \"материал_агт\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "✨ АГТ",
+                                "payload": "{\"command\": \"материал_агт\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🎨 Эмаль",
+                                "payload": "{\"command\": \"материал_эмаль\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🎨 Эмаль",
-                            "payload": "{\"command\": \"материал_эмаль\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_размер\"}"
-                        },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_размер\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
+
 
     @staticmethod
     def get_hardware_keyboard(platform: Platform):
@@ -365,188 +571,162 @@ class KeyboardManager:
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💰 Эконом",
-                            "payload": "{\"command\": \"фурнитура_эконом\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💰 Эконом",
+                                "payload": "{\"command\": \"фурнитура_эконом\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💎 Стандарт",
-                            "payload": "{\"command\": \"фурнитура_стандарт\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💎 Стандарт",
+                                "payload": "{\"command\": \"фурнитура_стандарт\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "👑 Премиум",
+                                "payload": "{\"command\": \"фурнитура_премиум\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "👑 Премиум",
-                            "payload": "{\"command\": \"фурнитура_премиум\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_материал\"}"
-                        },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": "{\"command\": \"назад_материал\"}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
 
+
     @staticmethod
-    def get_budget_keyboard(platform: Platform):
+    def get_budget_keyboard(platform: Platform, back_callback: str = "назад_предыдущий"):
         if platform == Platform.TELEGRAM:
             keyboard = [
                 [InlineKeyboardButton("Эконом", callback_data="бюджет_эконом")],
                 [InlineKeyboardButton("Стандарт", callback_data="бюджет_стандарт")],
                 [InlineKeyboardButton("Премиум", callback_data="бюджет_премиум")],
-                [InlineKeyboardButton("↩️ Назад", callback_data="назад_предыдущий")]
+                [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
             ]
             return InlineKeyboardMarkup(keyboard)
         else:  # VK
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💰 Эконом",
-                            "payload": "{\"command\": \"бюджет_эконом\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💰 Эконом",
+                                "payload": "{\"command\": \"бюджет_эконом\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "💎 Стандарт",
-                            "payload": "{\"command\": \"бюджет_стандарт\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "💎 Стандарт",
+                                "payload": "{\"command\": \"бюджет_стандарт\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "👑 Премиум",
+                                "payload": "{\"command\": \"бюджет_премиум\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "👑 Премиум",
-                            "payload": "{\"command\": \"бюджет_премиум\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_предыдущий\"}"
-                        },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": f"{{\"command\": \"{back_callback}\"}}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
 
     @staticmethod
-    def get_deadline_keyboard(platform: Platform):
+    def get_deadline_keyboard(platform: Platform, back_callback: str = "назад_бюджет"):
         if platform == Platform.TELEGRAM:
             keyboard = [
                 [InlineKeyboardButton("Этот месяц", callback_data="срок_месяц")],
                 [InlineKeyboardButton("1-2 месяца", callback_data="срок_1_2")],
                 [InlineKeyboardButton("3 месяца", callback_data="срок_3")],
                 [InlineKeyboardButton("Присматриваюсь", callback_data="срок_присмотр")],
-                [InlineKeyboardButton("↩️ Назад", callback_data="назад_бюджет")]
+                [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
             ]
             return InlineKeyboardMarkup(keyboard)
         else:  # VK
             keyboard = {
                 "inline": True,
                 "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📅 Этот месяц",
-                            "payload": "{\"command\": \"срок_месяц\"}"
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🗓 Этот месяц",
+                                "payload": "{\"command\": \"срок_месяц\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "positive"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "📆 1-2 месяца",
-                            "payload": "{\"command\": \"срок_1_2\"}"
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "⏳ 1-2 месяца",
+                                "payload": "{\"command\": \"срок_1_2\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "📅 3 месяца",
+                                "payload": "{\"command\": \"срок_3\"}"
+                            },
+                            "color": "primary"
                         },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🗓 3 месяца",
-                            "payload": "{\"command\": \"срок_3\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "👀 Присматриваюсь",
-                            "payload": "{\"command\": \"срок_присмотр\"}"
-                        },
-                        "color": "secondary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_бюджет\"}"
-                        },
-                        "color": "negative"
-                    }]
-                ]
-            }
-            return json.dumps(keyboard, ensure_ascii=False)
-
-    @staticmethod
-    def get_cabinet_type_keyboard(platform: Platform):
-        if platform == Platform.TELEGRAM:
-            keyboard = [
-                [InlineKeyboardButton("Распашной", callback_data="шкаф_распашной")],
-                [InlineKeyboardButton("Купе", callback_data="шкаф_купе")],
-                [InlineKeyboardButton("↩️ Назад", callback_data="назад_категории")]
-            ]
-            return InlineKeyboardMarkup(keyboard)
-        else:  # VK
-            keyboard = {
-                "inline": True,
-                "buttons": [
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🚪 Распашной",
-                            "payload": "{\"command\": \"шкаф_распашной\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🚶 Купе",
-                            "payload": "{\"command\": \"шкаф_купе\"}"
-                        },
-                        "color": "primary"
-                    }],
-                    [{
-                        "action": {
-                            "type": "callback",
-                            "label": "🔙 Назад",
-                            "payload": "{\"command\": \"назад_категории\"}"
-                        },
-                        "color": "negative"
-                    }]
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "👀 Присматриваюсь",
+                                "payload": "{\"command\": \"срок_присмотр\"}"
+                            },
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "callback",
+                                "label": "🔙 Назад",
+                                "payload": f"{{\"command\": \"{back_callback}\"}}"
+                            },
+                            "color": "negative"
+                        }
+                    ]
                 ]
             }
             return json.dumps(keyboard, ensure_ascii=False)
@@ -581,16 +761,16 @@ class FurnitureBotCore:
         self.clear_user_data(user_id)
         await self.send_message(
             platform, user_id, WELCOME_MESSAGE,
-            KeyboardManager.get_categories_keyboard(platform)
+            KeyboardManager.get_initial_keyboard(platform)
         )
 
     async def request_name(self, platform: Platform, user_id: int, message_id: int = None):
         text = "👤 **Контактные данные**\n\nПожалуйста, напишите ваше имя:"
-        if message_id:
+        if message_id and platform == Platform.TELEGRAM:
             await self.edit_message(platform, user_id, message_id, text)
         else:
             await self.send_message(platform, user_id, text)
-        self.get_user_data(user_id)['waiting_for'] = 'name'
+        self.get_user_data(user_id)["waiting_for"] = "name"
 
     async def handle_callback(self, platform: Platform, user_id: int, data: str, message_id: int = None):
         user_data = self.get_user_data(user_id)
@@ -600,10 +780,16 @@ class FurnitureBotCore:
             await self.handle_back_button(platform, user_id, data, message_id)
             return
 
+        # Обработка кнопки "Свяжитесь со мной"
+        if data == "связаться_со_мной":
+            user_data["category"] = "связаться_со_мной"
+            await self.request_name(platform, user_id, message_id)
+            return
+
         # Обработка выбора категории
         if data == "кухня":
-            user_data['category'] = 'кухня'
-            user_data['current_step'] = 'kitchen_type'
+            user_data["category"] = "кухня"
+            user_data["current_step"] = "kitchen_type"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "🏠 **Кухня**\n\nВыберите тип кухни:",
@@ -611,8 +797,8 @@ class FurnitureBotCore:
             )
 
         elif data == "шкаф":
-            user_data['category'] = 'шкаф'
-            user_data['current_step'] = 'cabinet_type'
+            user_data["category"] = "шкаф"
+            user_data["current_step"] = "cabinet_type"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "🚪 **Шкаф**\n\nВыберите тип шкафа:",
@@ -620,75 +806,125 @@ class FurnitureBotCore:
             )
 
         elif data == "гардеробная":
-            user_data['category'] = 'гардеробная'
-            user_data['current_step'] = 'size'
+            user_data["category"] = "гардеробная"
+            user_data["current_step"] = "size"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "👔 **Гардеробная**\n\nКакие у вас размеры?",
-                KeyboardManager.get_size_keyboard(platform)
+                KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории")
+            )
+
+        elif data == "прихожая":
+            user_data["category"] = "прихожая"
+            user_data["current_step"] = "hallway_type"
+            await self.send_or_edit_message(
+                platform, user_id, message_id,
+                "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                KeyboardManager.get_hallway_type_keyboard(platform)
+            )
+
+        elif data == "ванная":
+            user_data["category"] = "ванная"
+            user_data["current_step"] = "bathroom_type"
+            await self.send_or_edit_message(
+                platform, user_id, message_id,
+                "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                KeyboardManager.get_bathroom_type_keyboard(platform)
             )
 
         elif data == "другое":
+            user_data["category"] = "другое"
+            user_data["current_step"] = "other_furniture_text"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
-                "🛋 **Другая мебель**\n\nУточните, какая мебель вас интересует?",
-                KeyboardManager.get_actions_keyboard(platform)
+                "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:"
             )
+            user_data["waiting_for"] = "other_furniture_description"
 
         # Обработка сценария КУХНЯ
         elif data.startswith("кухня_"):
             if data == "кухня_угловая":
-                user_data['kitchen_type'] = 'Угловая'
+                user_data["kitchen_type"] = "Угловая"
             elif data == "кухня_прямая":
-                user_data['kitchen_type'] = 'Прямая'
+                user_data["kitchen_type"] = "Прямая"
             elif data == "кухня_п_образная":
-                user_data['kitchen_type'] = 'П-образная'
+                user_data["kitchen_type"] = "П-образная"
             elif data == "кухня_остров":
-                user_data['kitchen_type'] = 'С островом'
+                user_data["kitchen_type"] = "С островом"
 
-            user_data['current_step'] = 'size'
+            user_data["current_step"] = "size"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "📏 **Размеры**\n\nКакие у вас размеры?",
-                KeyboardManager.get_size_keyboard(platform)
+                KeyboardManager.get_size_keyboard(platform, back_callback="назад_тип")
             )
 
-        # Обработка размеров (общее для Кухни и Гардеробной)
+        # Обработка сценария ПРИХОЖАЯ
+        elif data.startswith("прихожая_"):
+            if data == "прихожая_прямая":
+                user_data["hallway_type"] = "Прямая"
+            elif data == "прихожая_угловая":
+                user_data["hallway_type"] = "Угловая"
+
+            user_data["current_step"] = "size"
+            await self.send_or_edit_message(
+                platform, user_id, message_id,
+                "📏 **Размеры**\n\nКакие у вас размеры?",
+                KeyboardManager.get_size_keyboard(platform, back_callback="назад_тип")
+            )
+
+        # Обработка сценария ВАННАЯ
+        elif data.startswith("ванная_"):
+            if data == "ванная_тумба":
+                user_data["bathroom_type"] = "Тумба под раковину"
+            elif data == "ванная_пенал":
+                user_data["bathroom_type"] = "Шкаф-пенал"
+            elif data == "ванная_зеркало":
+                user_data["bathroom_type"] = "Зеркало с подсветкой"
+
+            user_data["current_step"] = "size"
+            await self.send_or_edit_message(
+                platform, user_id, message_id,
+                "📏 **Размеры**\n\nКакие у вас размеры?",
+                KeyboardManager.get_size_keyboard(platform, back_callback="назад_тип")
+            )
+
+        # Обработка размеров (общее для Кухни, Гардеробной, Прихожей, Ванной)
         elif data.startswith("размер_"):
             if data == "размер_точные":
-                user_data['size'] = 'Точные'
+                user_data["size"] = "Точные"
             elif data == "размер_приблизительные":
-                user_data['size'] = 'Приблизительные'
+                user_data["size"] = "Приблизительные"
             elif data == "размер_не_знаю":
-                user_data['size'] = 'Не знаю'
+                user_data["size"] = "Не знаю"
 
             # Определяем следующий шаг в зависимости от категории
-            category = user_data.get('category', '')
+            category = user_data.get("category", "")
 
-            if category == 'кухня':
-                user_data['current_step'] = 'material'
+            if category == "кухня":
+                user_data["current_step"] = "material"
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
                     "🎨 **Материал фасадов**\n\nВыберите материал:",
                     KeyboardManager.get_material_keyboard(platform)
                 )
-            elif category == 'гардеробная':
-                user_data['current_step'] = 'budget'
+            elif category in ["гардеробная", "прихожая", "ванная", "шкаф", "другое"]:
+                user_data["current_step"] = "budget"
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
                     "💰 **Бюджет**\n\nВыберите бюджет:",
-                    KeyboardManager.get_budget_keyboard(platform)
+                    KeyboardManager.get_budget_keyboard(platform, back_callback="назад_размер")
                 )
 
         elif data.startswith("материал_"):
             if data == "материал_лдсп":
-                user_data['material'] = 'ЛДСП'
+                user_data["material"] = "ЛДСП"
             elif data == "материал_агт":
-                user_data['material'] = 'АГТ'
+                user_data["material"] = "АГТ"
             elif data == "материал_эмаль":
-                user_data['material'] = 'Эмаль'
+                user_data["material"] = "Эмаль"
 
-            user_data['current_step'] = 'hardware'
+            user_data["current_step"] = "hardware"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
@@ -697,58 +933,58 @@ class FurnitureBotCore:
 
         elif data.startswith("фурнитура_"):
             if data == "фурнитура_эконом":
-                user_data['hardware'] = 'Эконом'
+                user_data["hardware"] = "Эконом"
             elif data == "фурнитура_стандарт":
-                user_data['hardware'] = 'Стандарт'
+                user_data["hardware"] = "Стандарт"
             elif data == "фурнитура_премиум":
-                user_data['hardware'] = 'Премиум'
+                user_data["hardware"] = "Премиум"
 
-            user_data['current_step'] = 'budget'
+            user_data["current_step"] = "budget"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "💰 **Бюджет**\n\nВыберите бюджет:",
-                KeyboardManager.get_budget_keyboard(platform)
+                KeyboardManager.get_budget_keyboard(platform, back_callback="назад_фурнитура")
             )
 
         elif data.startswith("бюджет_"):
             if data == "бюджет_эконом":
-                user_data['budget'] = 'Эконом'
+                user_data["budget"] = "Эконом"
             elif data == "бюджет_стандарт":
-                user_data['budget'] = 'Стандарт'
+                user_data["budget"] = "Стандарт"
             elif data == "бюджет_премиум":
-                user_data['budget'] = 'Премиум'
+                user_data["budget"] = "Премиум"
 
-            user_data['current_step'] = 'deadline'
+            user_data["current_step"] = "deadline"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "📅 **Сроки заказа**\n\nВыберите сроки:",
-                KeyboardManager.get_deadline_keyboard(platform)
+                KeyboardManager.get_deadline_keyboard(platform, back_callback="назад_бюджет")
             )
 
         # Обработка сценария ШКАФ
         elif data.startswith("шкаф_"):
             if data == "шкаф_распашной":
-                user_data['cabinet_type'] = 'Распашной'
+                user_data["cabinet_type"] = "Распашной"
             elif data == "шкаф_купе":
-                user_data['cabinet_type'] = 'Купе'
+                user_data["cabinet_type"] = "Купе"
 
-            user_data['current_step'] = 'budget'
+            user_data["current_step"] = "budget"
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 "💰 **Бюджет**\n\nВыберите бюджет:",
-                KeyboardManager.get_budget_keyboard(platform)
+                KeyboardManager.get_budget_keyboard(platform, back_callback="назад_тип")
             )
 
         # Обработка сроков заказа (переходим к запросу контактных данных)
         elif data.startswith("срок_"):
             if data == "срок_месяц":
-                user_data['deadline'] = 'Этот месяц'
+                user_data["deadline"] = "Этот месяц"
             elif data == "срок_1_2":
-                user_data['deadline'] = '1-2 месяца'
+                user_data["deadline"] = "1-2 месяца"
             elif data == "срок_3":
-                user_data['deadline'] = '3 месяца'
+                user_data["deadline"] = "3 месяца"
             elif data == "срок_присмотр":
-                user_data['deadline'] = 'Присматриваюсь'
+                user_data["deadline"] = "Присматриваюсь"
 
             # Запрашиваем имя
             await self.request_name(platform, user_id, message_id)
@@ -759,7 +995,7 @@ class FurnitureBotCore:
                 platform, user_id, message_id,
                 "📱 **Введите номер телефона:**\n\nФормат: +7XXXXXXXXXX или 8XXXXXXXXXX"
             )
-            user_data['waiting_for'] = 'phone'
+            user_data["waiting_for"] = "phone"
 
         elif data == "консультация":
             await self.send_or_edit_message(
@@ -807,43 +1043,87 @@ class FurnitureBotCore:
             await self.handle_start(platform, user_id)
 
     async def send_or_edit_message(self, platform: Platform, user_id: int, message_id: int, text: str, keyboard=None):
-        if message_id:
+        if message_id and platform == Platform.TELEGRAM: # Only edit message for Telegram
             await self.edit_message(platform, user_id, message_id, text, keyboard)
         else:
             await self.send_message(platform, user_id, text, keyboard)
 
     async def handle_back_button(self, platform: Platform, user_id: int, data: str, message_id: int = None):
         back_step = data.replace("назад_", "")
+        user_data = self.get_user_data(user_id)
 
         if back_step == "категории":
             self.clear_user_data(user_id)
             await self.send_or_edit_message(
                 platform, user_id, message_id,
                 WELCOME_MESSAGE,
-                KeyboardManager.get_categories_keyboard(platform)
+                KeyboardManager.get_initial_keyboard(platform)
             )
 
-        elif back_step == "тип":
-            category = self.get_user_data(user_id).get('category', '')
-            if category == 'кухня':
+        elif back_step == "тип": # For kitchen, wardrobe, hallway, bathroom
+            category = user_data.get("category", "")
+            if category == "кухня":
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
                     "🏠 **Кухня**\n\nВыберите тип кухни:",
                     KeyboardManager.get_kitchen_type_keyboard(platform)
                 )
-            elif category == 'шкаф':
+            elif category == "шкаф":
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
                     "🚪 **Шкаф**\n\nВыберите тип шкафа:",
                     KeyboardManager.get_cabinet_type_keyboard(platform)
                 )
+            elif category == "прихожая":
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                    KeyboardManager.get_hallway_type_keyboard(platform)
+                )
+            elif category == "ванная":
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                    KeyboardManager.get_bathroom_type_keyboard(platform)
+                )
 
         elif back_step == "размер":
-            await self.send_or_edit_message(
-                platform, user_id, message_id,
-                "📏 **Размеры**\n\nКакие у вас размеры?",
-                KeyboardManager.get_size_keyboard(platform)
-            )
+            category = user_data.get("category", "")
+            if category == "кухня":
+                user_data["current_step"] = "kitchen_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🏠 **Кухня**\n\nВыберите тип кухни:",
+                    KeyboardManager.get_kitchen_type_keyboard(platform)
+                )
+            elif category == "гардеробная":
+                user_data["current_step"] = "size"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "👔 **Гардеробная**\n\nКакие у вас размеры?",
+                    KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории")
+                )
+            elif category == "прихожая":
+                user_data["current_step"] = "hallway_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                    KeyboardManager.get_hallway_type_keyboard(platform)
+                )
+            elif category == "ванная":
+                user_data["current_step"] = "bathroom_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                    KeyboardManager.get_bathroom_type_keyboard(platform)
+                )
+            elif category == "шкаф":
+                user_data["current_step"] = "cabinet_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "🚪 **Шкаф**\n\nВыберите тип шкафа:",
+                    KeyboardManager.get_cabinet_type_keyboard(platform)
+                )
 
         elif back_step == "материал":
             await self.send_or_edit_message(
@@ -852,34 +1132,58 @@ class FurnitureBotCore:
                 KeyboardManager.get_material_keyboard(platform)
             )
 
-        elif back_step == "предыдущий":
-            # Определяем предыдущий шаг на основе категории
-            category = self.get_user_data(user_id).get('category', '')
-            if category == 'кухня':
+        elif back_step == "фурнитура":
+            await self.send_or_edit_message(
+                platform, user_id, message_id,
+                "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
+                KeyboardManager.get_hardware_keyboard(platform)
+            )
+
+        elif back_step == "бюджет":
+            category = user_data.get("category", "")
+            if category == "кухня":
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
                     "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
                     KeyboardManager.get_hardware_keyboard(platform)
                 )
-            elif category in ['шкаф', 'гардеробная']:
-                if category == 'шкаф':
+            elif category in ["шкаф", "гардеробная", "прихожая", "ванная", "другое"]:
+                if category == "шкаф":
                     await self.send_or_edit_message(
                         platform, user_id, message_id,
                         "🚪 **Шкаф**\n\nВыберите тип шкафа:",
                         KeyboardManager.get_cabinet_type_keyboard(platform)
                     )
-                else:
+                elif category == "гардеробная":
                     await self.send_or_edit_message(
                         platform, user_id, message_id,
                         "👔 **Гардеробная**\n\nКакие у вас размеры?",
-                        KeyboardManager.get_size_keyboard(platform)
+                        KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории")
                     )
+                elif category == "прихожая":
+                    await self.send_or_edit_message(
+                        platform, user_id, message_id,
+                        "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                        KeyboardManager.get_hallway_type_keyboard(platform)
+                    )
+                elif category == "ванная":
+                    await self.send_or_edit_message(
+                        platform, user_id, message_id,
+                        "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                        KeyboardManager.get_bathroom_type_keyboard(platform)
+                    )
+                elif category == "другое":
+                    await self.send_or_edit_message(
+                        platform, user_id, message_id,
+                        "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:"
+                    )
+                    user_data["waiting_for"] = "other_furniture_description"
 
-        elif back_step == "бюджет":
+        elif back_step == "другое":
             await self.send_or_edit_message(
                 platform, user_id, message_id,
-                "💰 **Бюджет**\n\nВыберите бюджет:",
-                KeyboardManager.get_budget_keyboard(platform)
+                WELCOME_MESSAGE,
+                KeyboardManager.get_initial_keyboard(platform)
             )
 
     async def handle_text_message(self, platform: Platform, user_id: int, text: str):
@@ -889,16 +1193,16 @@ class FurnitureBotCore:
         normalized_text = text.lower().strip()
 
         # Команды для запуска бота
-        start_commands = ['/start', 'start', 'начать', 'старт', 'go', 'меню']
+        start_commands = ["/start", "start", "начать", "старт", "go", "меню"]
 
         if normalized_text in start_commands:
             await self.handle_start(platform, user_id)
             return
 
         # Если ожидаем имя
-        if user_data.get('waiting_for') == 'name':
-            user_data['name'] = text
-            user_data['waiting_for'] = 'phone'
+        if user_data.get("waiting_for") == "name":
+            user_data["name"] = text
+            user_data["waiting_for"] = "phone"
 
             await self.send_message(
                 platform, user_id,
@@ -906,108 +1210,75 @@ class FurnitureBotCore:
                 "📱 **Телефон**\n\nПожалуйста, отправьте ваш номер телефона:",
                 KeyboardManager.get_phone_keyboard(platform)
             )
+            return
 
-        # Если ожидаем телефон и пользователь ввел вручную
-        elif user_data.get('waiting_for') == 'phone':
-            # Если пользователь нажал "Ввести вручную" в Telegram
-            if text == "Ввести вручную":
-                # Для Telegram используем специальную клавиатуру без кнопок
-                if platform == Platform.TELEGRAM:
-                    from telegram import ReplyKeyboardRemove
-                    await self.send_message(
-                        platform, user_id,
-                        "📱 **Введите номер телефона вручную:**\n\n"
-                        "Формат: +7XXXXXXXXXX или 8XXXXXXXXXX",
-                        ReplyKeyboardRemove()
-                    )
-                else:
-                    await self.send_message(
-                        platform, user_id,
-                        "📱 **Введите номер телефона вручную:**\n\n"
-                        "Формат: +7XXXXXXXXXX или 8XXXXXXXXXX"
-                    )
-                return
-
+        # Если ожидаем телефон
+        if user_data.get("waiting_for") == "phone":
             # Простая валидация номера телефона
-            phone = text.strip()
-            # Убираем все нецифровые символы кроме +
-            cleaned_phone = ''.join(c for c in phone if c.isdigit() or c == '+')
-
-            # Проверяем различные форматы номеров
-            is_valid = False
-            if cleaned_phone.startswith('+7') and len(cleaned_phone) == 12:
-                is_valid = True
-            elif cleaned_phone.startswith('8') and len(cleaned_phone) == 11:
-                is_valid = True
-                cleaned_phone = '+7' + cleaned_phone[1:]  # Конвертируем в международный формат
-            elif cleaned_phone.startswith('7') and len(cleaned_phone) == 11:
-                is_valid = True
-                cleaned_phone = '+7' + cleaned_phone[1:]
-
-            if is_valid:
-                user_data['phone'] = cleaned_phone
-                user_data['waiting_for'] = None
-
-                # Формируем итоговое сообщение с данными
+            if len(text) >= 10 and all(char.isdigit() or char in ["+", "(", ")", "-", " "] for char in text):
+                user_data["phone"] = text
+                user_data["waiting_for"] = None
                 await self.send_final_summary(platform, user_id)
-
             else:
                 await self.send_message(
                     platform, user_id,
-                    "❌ **Неверный формат номера**\n\n"
-                    "Пожалуйста, введите номер в формате:\n"
-                    "+7XXXXXXXXXX или 8XXXXXXXXXX\n\n"
-                    "Примеры:\n"
-                    "+79123456789\n"
-                    "89123456789\n"
-                    "9123456789",
-                    KeyboardManager.get_phone_keyboard(platform)
+                    "❌ Некорректный формат номера. Пожалуйста, введите номер телефона в формате +7XXXXXXXXXX или 8XXXXXXXXXX:"
                 )
+            return
 
-        # Обработка текстовых команд для дополнительных действий
-        elif normalized_text == "консультация":
-            await self.send_message(
-                platform, user_id,
-                "📞 **Консультация**\n\nДля консультации свяжитесь с нами:\n\n"
-                "💬 Телеграм: @max_lap555\n"
-                "📱 WhatsApp: +79063405556",
-                KeyboardManager.get_actions_keyboard(platform)
+        # Если ожидаем описание другой мебели
+        if user_data.get("waiting_for") == "other_furniture_description":
+            user_data["other_furniture_description"] = text
+            user_data["waiting_for"] = None
+            user_data["current_step"] = "budget"
+            await self.send_or_edit_message(
+                platform, user_id, None,
+                "💰 **Бюджет**\n\nВыберите бюджет:",
+                KeyboardManager.get_budget_keyboard(platform, back_callback="назад_другое")
             )
+            return
 
-        elif normalized_text == "написать в тг":
-            await self.send_message(
-                platform, user_id,
-                "💬 **Написать в Telegram**\n\n"
-                "Перейдите в Telegram: @max_lap555\n"
-                "Или напишите на номер: +79063405556",
-                KeyboardManager.get_actions_keyboard(platform)
-            )
-        else:
-            # Если непонятное сообщение - отправляем приветствие
-            await self.handle_start(platform, user_id)
+        # Если сообщение не является командой и не ожидается ввод
+        await self.send_message(
+            platform, user_id,
+            "Извините, я не понял ваше сообщение. Пожалуйста, используйте кнопки или начните заново /start.",
+            KeyboardManager.get_initial_keyboard(platform) # Возвращаем к начальной клавиатуре
+        )
 
     async def send_final_summary(self, platform: Platform, user_id: int):
         user_data = self.get_user_data(user_id)
+        summary = "✅ **Ваша заявка принята!**\n\n"
 
-        # Формируем итоговое сообщение БЕЗ Markdown разметки
-        summary = "✅ Заявка принята!\n\n"
-        summary += "📋 Данные заявки:\n"
+        category = user_data.get("category", "Не указано")
 
-        category = user_data.get('category', 'Не указано')
-        summary += f"• Категория: {category}\n"
+        if category == "связаться_со_мной":
+            summary += "Мы свяжемся с вами в ближайшее время.\n\n"
+        else:
+            summary += f"**Детали заказа {category.capitalize()}:**\n"
 
-        if category == 'кухня':
+        if category == "кухня":
             summary += f"• Тип кухни: {user_data.get('kitchen_type', 'Не указано')}\n"
             summary += f"• Размеры: {user_data.get('size', 'Не указано')}\n"
             summary += f"• Материал: {user_data.get('material', 'Не указано')}\n"
             summary += f"• Фурнитура: {user_data.get('hardware', 'Не указано')}\n"
-        elif category == 'шкаф':
+        elif category == "шкаф":
             summary += f"• Тип шкафа: {user_data.get('cabinet_type', 'Не указано')}\n"
-        elif category == 'гардеробная':
             summary += f"• Размеры: {user_data.get('size', 'Не указано')}\n"
+        elif category == "гардеробная":
+            summary += f"• Размеры: {user_data.get('size', 'Не указано')}\n"
+        elif category == "прихожая":
+            summary += f"• Тип прихожей: {user_data.get('hallway_type', 'Не указано')}\n"
+            summary += f"• Размеры: {user_data.get('size', 'Не указано')}\n"
+        elif category == "ванная":
+            summary += f"• Тип мебели для ванной: {user_data.get('bathroom_type', 'Не указано')}\n"
+            summary += f"• Размеры: {user_data.get('size', 'Не указано')}\n"
+        elif category == "другое":
+            summary += f"• Описание мебели: {user_data.get('other_furniture_description', 'Не указано')}\n"
 
-        summary += f"• Бюджет: {user_data.get('budget', 'Не указано')}\n"
-        summary += f"• Сроки: {user_data.get('deadline', 'Не указано')}\n"
+        if category != "связаться_со_мной":
+            summary += f"• Бюджет: {user_data.get('budget', 'Не указано')}\n"
+            summary += f"• Сроки: {user_data.get('deadline', 'Не указано')}\n"
+
         summary += f"• Имя: {user_data.get('name', 'Не указано')}\n"
         summary += f"• Телефон: {user_data.get('phone', 'Не указано')}\n\n"
 
@@ -1062,10 +1333,10 @@ class TelegramAdapter:
         user_id = update.effective_user.id
         user_data = self.bot_core.get_user_data(user_id)
 
-        if user_data.get('waiting_for') == 'phone':
+        if user_data.get("waiting_for") == "phone":
             phone_number = update.message.contact.phone_number
-            user_data['phone'] = phone_number
-            user_data['waiting_for'] = None
+            user_data["phone"] = phone_number
+            user_data["waiting_for"] = None
             await self.bot_core.send_final_summary(Platform.TELEGRAM, user_id)
 
     async def send_message(self, user_id: int, text: str, keyboard=None):
@@ -1118,10 +1389,10 @@ class VKAdapter:
     def handle_message(self, event):
         """Обработка текстовых сообщений"""
         try:
-            user_id = event.obj.message['from_id']
-            text = event.obj.message['text']
+            user_id = event.obj.message["from_id"]
+            text = event.obj.message["text"]
 
-            logger.info(f"VK: Сообщение от {user_id}: '{text}'")
+            logger.info(f"VK: Сообщение от {user_id}: \'{text}\'")
 
             # Запускаем обработку в отдельном потоке
             threading.Thread(
@@ -1147,18 +1418,18 @@ class VKAdapter:
 
             # Извлекаем команду из payload
             if isinstance(payload, dict):
-                command = payload.get('command', '')
+                command = payload.get("command", "")
             elif isinstance(payload, str):
                 # Пытаемся распарсить JSON строку
                 try:
                     payload_dict = json.loads(payload)
-                    command = payload_dict.get('command', '')
+                    command = payload_dict.get("command", "")
                 except:
                     command = payload
             else:
                 command = str(payload)
 
-            logger.info(f"VK: Извлеченная команда: '{command}'")
+            logger.info(f"VK: Извлеченная команда: \'{command}\'")
 
             # Отправляем ответ на callback (ВАЖНО!) - используем глобальный json
             self.vk.messages.sendMessageEventAnswer(
@@ -1187,7 +1458,7 @@ class VKAdapter:
         try:
             normalized_text = text.lower().strip()
 
-            if normalized_text in ['/start', 'start', 'начать', 'меню']:
+            if normalized_text in ["/start", "start", "начать", "меню"]:
                 await self.bot_core.handle_start(Platform.VK, user_id)
             else:
                 await self.bot_core.handle_text_message(Platform.VK, user_id, text)
@@ -1198,7 +1469,7 @@ class VKAdapter:
     async def process_callback(self, user_id: int, command: str):
         """Обработка callback команды"""
         try:
-            logger.info(f"VK: Обработка callback команды: '{command}'")
+            logger.info(f"VK: Обработка callback команды: \'{command}\'")
             # Передаем только 3 аргумента, message_id не нужен для VK
             await self.bot_core.handle_callback(Platform.VK, user_id, command)
         except Exception as e:
@@ -1213,15 +1484,15 @@ class VKAdapter:
             logger.info(f"VK: Текст: {text}")
 
             params = {
-                'user_id': user_id,
-                'message': text,
-                'random_id': get_random_id(),
-                'dont_parse_links': 1
+                "user_id": user_id,
+                "message": text,
+                "random_id": get_random_id(),
+                "dont_parse_links": 1
             }
 
             if keyboard:
                 logger.info("VK: Добавляю клавиатуру")
-                params['keyboard'] = keyboard
+                params["keyboard"] = keyboard
 
                 # Логируем клавиатуру для отладки
                 try:
