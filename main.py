@@ -1,4 +1,5 @@
 
+
 import asyncio
 import json
 import logging
@@ -13,6 +14,36 @@ import vk_api
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+import requests
+
+TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
+TELEGRAM_CHAT_ID = "4868289327"
+VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
+VK_GROUP_ID = "233089872"
+
+# В функции send_telegram_application используйте TELEGRAM_TOKEN вместо TELEGRAM_BOT_TOKEN
+def send_telegram_application(application_data):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        logging.warning("Telegram bot token or chat ID not configured. Skipping sending application to Telegram group.")
+        return
+
+    message_text = "Новая заявка:\n\n"
+    for key, value in application_data.items():
+        message_text += f"{key}: {value}\n"
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message_text,
+        "parse_mode": "HTML"
+    }
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        logging.info(f"Application successfully sent to Telegram group: {response.json()}")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Failed to send application to Telegram group: {e}")
+
 from vk_api.utils import get_random_id
 
 # Настройка логирования
@@ -27,11 +58,6 @@ class Platform(Enum):
     TELEGRAM = "telegram"
     VK = "vk"
 
-
-# КОНФИГУРАЦИЯ
-TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
-VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
-VK_GROUP_ID = "233089872"
 
 # Приветственное сообщение
 WELCOME_MESSAGE = """
@@ -1292,8 +1318,12 @@ class FurnitureBotCore:
             KeyboardManager.get_contact_final_keyboard(platform)
         )
 
+        # Отправляем заявку в Telegram группу
+        send_telegram_application(user_data)
+
         # Очищаем данные пользователя после отправки сводки
         self.clear_user_data(user_id)
+
 
 
 # Адаптер для Telegram
