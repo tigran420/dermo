@@ -46,7 +46,6 @@ WELCOME_PHOTOS: List[str] = [
     "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(7).jpg",
     "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58.jpg",
     "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-59.jpg",
-    # user provided 9th maybe duplicate; keep it if exists
 ]
 
 MATERIALS_PHOTOS: List[str] = [
@@ -55,7 +54,7 @@ MATERIALS_PHOTOS: List[str] = [
     "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-06_15-58-59.jpg",
 ]
 
-# New welcome text (from user)
+# Updated welcome text
 WELCOME_MESSAGE = (
     "Приветствуем!🤝\n"
     "На связи 2М ФАБРИКА МЕБЕЛИ!\n"
@@ -189,8 +188,8 @@ class KeyboardManager:
         if platform == Platform.TELEGRAM:
             keyboard = [
                 [InlineKeyboardButton("Эконом — доступные материалы, базовая фурнитура (до 150 тыс. руб.)", callback_data="бюджет_эконом")],
-                [InlineKeyboardButton("Стандарт — оптимальное соотношение цены и качества (150–300 тыс. руб.)", callback_data="бюджет_стандарт")],
-                [InlineKeyboardButton("Премиум — эксклюзивные материалы, премиальная фурнитура (от 300 тыс. руб.)", callback_data="бюджет_премиум")],
+                [InlineKeyboardButton("Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)", callback_data="бюджет_стандарт")],
+                [InlineKeyboardButton("Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)", callback_data="бюджет_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)],
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -266,30 +265,62 @@ class FurnitureBotCore:
             # send welcome text first
             await self.send_message(platform, user_id, WELCOME_MESSAGE, KeyboardManager.get_initial_keyboard(platform))
             # send album of photos
-            media = [InputMediaPhoto(url) for url in WELCOME_PHOTOS]
             try:
+                media = [InputMediaPhoto(url) for url in WELCOME_PHOTOS]
                 await self.adapters[Platform.TELEGRAM].application.bot.send_media_group(chat_id=user_id, media=media)
+                logger.info(f"Отправлено {len(WELCOME_PHOTOS)} welcome фото в Telegram")
             except Exception as e:
                 logger.error(f"Ошибка отправки welcome photos в Telegram: {e}")
+                # Попробуем отправить по одному
+                for url in WELCOME_PHOTOS:
+                    try:
+                        await self.adapters[Platform.TELEGRAM].application.bot.send_photo(chat_id=user_id, photo=url)
+                    except Exception as e2:
+                        logger.error(f"Ошибка отправки фото {url}: {e2}")
         else:
             # VK: send text then upload photos and send as album (messages)
             await self.send_message(platform, user_id, WELCOME_MESSAGE, KeyboardManager.get_initial_keyboard(platform))
-            try:
-                upload = VkUpload(self.adapters[Platform.VK].vk_session)
-                photo_objs = []
-                for url in WELCOME_PHOTOS:
-                    r = requests.get(url, timeout=10)
-                    if r.status_code == 200:
-                        photo = upload.photo_messages(photos=r.content)
-                        # photo_messages returns list
-                        if photo:
-                            owner_id = photo[0]["owner_id"]
-                            id_ = photo[0]["id"]
-                            photo_objs.append(f"photo{owner_id}_{id_}")
-                if photo_objs:
-                    self.adapters[Platform.VK].vk.messages.send(user_id=user_id, random_id=get_random_id(), attachment=','.join(photo_objs))
-            except Exception as e:
-                logger.error(f"Ошибка отправки welcome photos в VK: {e}")
+            await self.send_photos_vk(user_id, WELCOME_PHOTOS, "welcome")
+
+    async def send_photos_vk(self, user_id: int, photo_urls: List[str], photo_type: str = "photos"):
+        """Универсальная функция отправки фото в VK"""
+        try:
+            vk_adapter = self.adapters[Platform.VK]
+            upload = VkUpload(vk_adapter.vk_session)
+            photo_attachments = []
+            
+            for i, url in enumerate(photo_urls):
+                try:
+                    logger.info(f"VK: Загрузка {photo_type} фото {i+1}/{len(photo_urls)}: {url}")
+                    response = requests.get(url, timeout=30)
+                    response.raise_for_status()
+                    
+                    # Загружаем фото в VK
+                    photo = upload.photo_messages(photos=response.content)[0]
+                    attachment = f"photo{photo['owner_id']}_{photo['id']}"
+                    photo_attachments.append(attachment)
+                    
+                    # Небольшая задержка между загрузками чтобы не превысить лимиты VK
+                    time.sleep(0.5)
+                    
+                except Exception as e:
+                    logger.error(f"Ошибка загрузки {photo_type} фото {url}: {e}")
+                    continue
+            
+            if photo_attachments:
+                # Отправляем фото одним сообщением (максимум 10 вложений)
+                attachments_str = ','.join(photo_attachments)
+                vk_adapter.vk.messages.send(
+                    user_id=user_id,
+                    random_id=get_random_id(),
+                    attachment=attachments_str
+                )
+                logger.info(f"VK: Отправлено {len(photo_attachments)} {photo_type} фото")
+            else:
+                logger.warning(f"VK: Не удалось загрузить ни одного {photo_type} фото")
+                
+        except Exception as e:
+            logger.error(f"Критическая ошибка отправки {photo_type} фото в VK: {e}")
 
     async def request_name(self, platform: Platform, user_id: int, message_id: int = None):
         text = "👤 Контактные данные\n\nПожалуйста, напишите ваше имя:"
@@ -311,14 +342,9 @@ class FurnitureBotCore:
             await self.request_name(platform, user_id, message_id)
             return
 
-        # Category handling (abbreviated here, reuse previous logic)
-        # ... (same as before) - keep full logic
-        # For brevity in this generated file, we will forward unmodified callbacks to existing logic
-        # But we still keep specific handlers for "материал" to send materials photos
-
-        # If user requested materials section, send 3 photos
-        if data.startswith("материал_") or (data == "материалы"):
-            # remember material selection if applicable
+        # Обработка материалов - отправка фото материалов
+        if data.startswith("материал_"):
+            # remember material selection
             if data == "материал_лдсп":
                 user_data_local["material"] = "ЛДСП"
             elif data == "материал_агт":
@@ -331,46 +357,40 @@ class FurnitureBotCore:
             await self.send_message(platform, user_id, text)
 
             if platform == Platform.TELEGRAM:
-                media = [InputMediaPhoto(url) for url in MATERIALS_PHOTOS]
                 try:
+                    media = [InputMediaPhoto(url) for url in MATERIALS_PHOTOS]
                     await self.adapters[Platform.TELEGRAM].application.bot.send_media_group(chat_id=user_id, media=media)
+                    logger.info(f"Отправлено {len(MATERIALS_PHOTOS)} фото материалов в Telegram")
                 except Exception as e:
                     logger.error(f"Ошибка отправки материалов в Telegram: {e}")
-            else:
-                try:
-                    upload = VkUpload(self.adapters[Platform.VK].vk_session)
-                    photo_objs = []
+                    # Fallback - отправка по одному
                     for url in MATERIALS_PHOTOS:
-                        r = requests.get(url, timeout=10)
-                        if r.status_code == 200:
-                            photo = upload.photo_messages(photos=r.content)
-                            if photo:
-                                owner_id = photo[0]["owner_id"]
-                                id_ = photo[0]["id"]
-                                photo_objs.append(f"photo{owner_id}_{id_}")
-                    if photo_objs:
-                        self.adapters[Platform.VK].vk.messages.send(user_id=user_id, random_id=get_random_id(), attachment=','.join(photo_objs))
-                except Exception as e:
-                    logger.error(f"Ошибка отправки материалов в VK: {e}")
+                        try:
+                            await self.adapters[Platform.TELEGRAM].application.bot.send_photo(chat_id=user_id, photo=url)
+                        except Exception as e2:
+                            logger.error(f"Ошибка отправки фото материала {url}: {e2}")
+            else:
+                await self.send_photos_vk(user_id, MATERIALS_PHOTOS, "materials")
+            
+            # После показа материалов продолжаем поток
+            await self.send_message(platform, user_id, "Выберите фурнитуру:", KeyboardManager.get_hardware_keyboard(platform))
             return
 
-        # Fallback: reuse previous large handler by delegating to core logic implemented earlier
-        # For compatibility, call the existing big handler by simulating previous behavior
-        # In practice we'll simply set category if matches known ones
-        known = ["кухня","шкаф","гардеробная","прихожая","ванная","другое","срок_месяц","срок_1_2","срок_3","срок_присмотр","бюджет_эконом","бюджет_стандарт","бюджет_премиум"]
-        if data in known:
-            # minimal handling to continue flow: set category/budget/deadline etc.
-            if data in ["кухня","шкаф","гардеробная","прихожая","ванная","другое"]:
-                user_data_local["category"] = data
-                # ask next step
-                await self.send_message(platform, user_id, "Спасибо. Далее выберите опции.")
-            elif data.startswith("бюджет_"):
-                user_data_local["budget"] = data.replace("бюджет_", "")
-                await self.send_message(platform, user_id, "Бюджет выбран.")
-            elif data.startswith("срок_"):
-                user_data_local["deadline"] = data.replace("срок_", "")
-                await self.request_name(platform, user_id, message_id)
-            return
+        # Упрощенная обработка других callback для демонстрации
+        if data in ["кухня", "шкаф", "гардеробная", "прихожая", "ванная", "другое"]:
+            user_data_local["category"] = data
+            if data == "кухня":
+                await self.send_message(platform, user_id, "Выберите тип кухни:", KeyboardManager.get_kitchen_type_keyboard(platform))
+            else:
+                await self.send_message(platform, user_id, "Выберите бюджет:", KeyboardManager.get_budget_keyboard(platform))
+        
+        elif data.startswith("бюджет_"):
+            user_data_local["budget"] = data.replace("бюджет_", "")
+            await self.send_message(platform, user_id, "Выберите сроки:", KeyboardManager.get_deadline_keyboard(platform))
+        
+        elif data.startswith("срок_"):
+            user_data_local["deadline"] = data.replace("срок_", "")
+            await self.request_name(platform, user_id, message_id)
 
     async def send_or_edit_message(self, platform: Platform, user_id: int, message_id: int, text: str, keyboard=None):
         if message_id and platform == Platform.TELEGRAM:
@@ -379,7 +399,6 @@ class FurnitureBotCore:
             await self.send_message(platform, user_id, text, keyboard)
 
     async def handle_back_button(self, platform: Platform, user_id: int, data: str, message_id: int = None):
-        # Keep existing back logic simplified
         if data == "назад_категории":
             await self.send_or_edit_message(platform, user_id, message_id, WELCOME_MESSAGE, KeyboardManager.get_initial_keyboard(platform))
 
@@ -425,11 +444,31 @@ class FurnitureBotCore:
 
         # send to admin group
         try:
-            send_telegram_application(user_data_local)
+            # Функция отправки в админ-чат (нужно реализовать)
+            await self.send_telegram_application(user_data_local)
         except Exception as e:
             logger.error(f"Не удалось отправить заявку в админ-чат: {e}")
 
         self.clear_user_data(user_id)
+
+    async def send_telegram_application(self, user_data: Dict[str, Any]):
+        """Отправка заявки в админ-чат Telegram"""
+        try:
+            summary = "📝 Новая заявка!\n\n"
+            summary += f"Категория: {user_data.get('category', 'Не указано')}\n"
+            if 'kitchen_type' in user_data:
+                summary += f"Тип кухни: {user_data.get('kitchen_type')}\n"
+            summary += f"Бюджет: {user_data.get('budget', 'Не указано')}\n"
+            summary += f"Сроки: {user_data.get('deadline', 'Не указано')}\n"
+            summary += f"Имя: {user_data.get('name', 'Не указано')}\n"
+            summary += f"Телефон: {user_data.get('phone', 'Не указано')}\n"
+            
+            await self.adapters[Platform.TELEGRAM].application.bot.send_message(
+                chat_id=TELEGRAM_CHAT_ID,
+                text=summary
+            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки заявки в админ-чат: {e}")
 
 
 # ----------------------- Telegram Adapter -----------------------
@@ -466,11 +505,16 @@ class TelegramAdapter:
             await self.bot_core.send_final_summary(Platform.TELEGRAM, user_id)
 
     async def send_message(self, user_id: int, text: str, keyboard=None):
-        # Use plain text to avoid parse_mode issues
-        await self.application.bot.send_message(chat_id=user_id, text=text, reply_markup=keyboard)
+        try:
+            await self.application.bot.send_message(chat_id=user_id, text=text, reply_markup=keyboard)
+        except Exception as e:
+            logger.error(f"Ошибка отправки сообщения в Telegram: {e}")
 
     async def edit_message(self, user_id: int, message_id: int, text: str, keyboard=None):
-        await self.application.bot.edit_message_text(chat_id=user_id, message_id=message_id, text=text, reply_markup=keyboard)
+        try:
+            await self.application.bot.edit_message_text(chat_id=user_id, message_id=message_id, text=text, reply_markup=keyboard)
+        except Exception as e:
+            logger.error(f"Ошибка редактирования сообщения в Telegram: {e}")
 
     def run(self):
         logger.info("Запуск Telegram бота...")
@@ -496,15 +540,15 @@ class VKAdapter:
                 logger.info("✓ Long Poll подключен успешно!")
 
                 for event in longpoll.listen():
-                    logger.info(f"VK: Получено событие типа: {event.type}")
-                    if event.type == VkBotEventType.MESSAGE_NEW:
-                        self.handle_message(event)
-                    elif event.type == VkBotEventType.MESSAGE_EVENT:
-                        self.handle_callback(event)
+                    try:
+                        if event.type == VkBotEventType.MESSAGE_NEW:
+                            self.handle_message(event)
+                        elif event.type == VkBotEventType.MESSAGE_EVENT:
+                            self.handle_callback(event)
+                    except Exception as e:
+                        logger.error(f"Ошибка обработки события VK: {e}")
             except Exception as e:
                 logger.error(f"VK loop error: {e}")
-                import traceback
-                logger.error(traceback.format_exc())
                 logger.info("Переподключение к VK через 10 секунд...")
                 time.sleep(10)
 
@@ -513,9 +557,9 @@ class VKAdapter:
             user_id = event.obj.message['from_id']
             text = event.obj.message.get('text', '')
             logger.info(f"VK: Сообщение от {user_id}: '{text}'")
-            threading.Thread(target=lambda: asyncio.run(self.process_message(user_id, text)), daemon=True).start()
+            asyncio.run(self.process_message(user_id, text))
         except Exception as e:
-            logger.error(f"Ошибка обработки сообщения: {e}")
+            logger.error(f"Ошибка обработки сообщения VK: {e}")
 
     def handle_callback(self, event):
         try:
@@ -532,47 +576,45 @@ class VKAdapter:
 
             # send UI response
             try:
-                self.vk.messages.sendMessageEventAnswer(event_id=event.obj.event_id, user_id=user_id, peer_id=event.obj.peer_id, event_data=json.dumps({"type": "show_snackbar", "text": "Обрабатываю..."}))
+                self.vk.messages.sendMessageEventAnswer(
+                    event_id=event.obj.event_id,
+                    user_id=user_id,
+                    peer_id=event.obj.peer_id,
+                    event_data=json.dumps({"type": "show_snackbar", "text": "Обрабатываю..."})
+                )
             except Exception as e:
                 logger.debug(f"Не удалось отправить event answer: {e}")
 
-            threading.Thread(target=lambda: asyncio.run(self.process_callback(user_id, command)), daemon=True).start()
+            asyncio.run(self.process_callback(user_id, command))
         except Exception as e:
-            logger.error(f"Ошибка обработки callback: {e}")
+            logger.error(f"Ошибка обработки callback VK: {e}")
 
     async def process_message(self, user_id: int, text: str):
         try:
-            normalized_text = text.lower().strip()
-            if normalized_text in ['/start', 'start', 'начать', 'меню']:
-                await self.bot_core.handle_start(Platform.VK, user_id)
-            else:
-                await self.bot_core.handle_text_message(Platform.VK, user_id, text)
+            await self.bot_core.handle_text_message(Platform.VK, user_id, text)
         except Exception as e:
-            logger.error(f"Ошибка process_message: {e}")
+            logger.error(f"Ошибка process_message VK: {e}")
 
     async def process_callback(self, user_id: int, command: str):
         try:
             await self.bot_core.handle_callback(Platform.VK, user_id, command)
         except Exception as e:
-            logger.error(f"Ошибка process_callback: {e}")
+            logger.error(f"Ошибка process_callback VK: {e}")
 
     async def send_message(self, user_id: int, text: str, keyboard=None):
         try:
-            logger.info(f"VK: Отправка сообщения пользователю {user_id}")
             params = {
                 'user_id': user_id,
                 'message': text,
                 'random_id': get_random_id(),
-                'dont_parse_links': 1
             }
             if keyboard:
                 params['keyboard'] = keyboard
 
             result = self.vk.messages.send(**params)
-            logger.info(f"VK: Сообщение отправлено! ID: {result}")
             return result
         except Exception as e:
-            logger.error(f"VK: Ошибка отправки: {e}")
+            logger.error(f"VK: Ошибка отправки сообщения: {e}")
 
     async def edit_message(self, user_id: int, message_id: int, text: str, keyboard=None):
         # VK longpoll can't edit messages: send new
@@ -604,4 +646,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
