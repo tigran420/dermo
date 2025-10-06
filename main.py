@@ -587,9 +587,9 @@ class KeyboardManager:
     def get_hardware_keyboard(platform: Platform):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Эконом", callback_data="фурнитура_эконом")],
-                [InlineKeyboardButton("Стандарт", callback_data="фурнитура_стандарт")],
-                [InlineKeyboardButton("Премиум", callback_data="фурнитура_премиум")],
+                [InlineKeyboardButton("Бюджетный до 150к", callback_data="фурнитура_эконом")],
+                [InlineKeyboardButton("Стандарт от 150-300к", callback_data="фурнитура_стандарт")],
+                [InlineKeyboardButton("Премиум от 300к", callback_data="фурнитура_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data="назад_материал")]
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -601,7 +601,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💰 Эконом",
+                                "label": "Бюджетный до 150к",
                                 "payload": "{\"command\": \"фурнитура_эконом\"}"
                             },
                             "color": "primary"
@@ -609,7 +609,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💎 Стандарт",
+                                "label": "Стандарт от 150-300к",
                                 "payload": "{\"command\": \"фурнитура_стандарт\"}"
                             },
                             "color": "primary"
@@ -619,7 +619,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "👑 Премиум",
+                                "label": "Премиум от 300к",
                                 "payload": "{\"command\": \"фурнитура_премиум\"}"
                             },
                             "color": "primary"
@@ -641,9 +641,9 @@ class KeyboardManager:
     def get_budget_keyboard(platform: Platform, back_callback: str = "назад_предыдущий"):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Эконом", callback_data="бюджет_эконом")],
-                [InlineKeyboardButton("Стандарт", callback_data="бюджет_стандарт")],
-                [InlineKeyboardButton("Премиум", callback_data="бюджет_премиум")],
+                [InlineKeyboardButton("Бюджетный до 150к", callback_data="бюджет_эконом")],
+                [InlineKeyboardButton("Стандарт от 150-300к", callback_data="бюджет_стандарт")],
+                [InlineKeyboardButton("Премиум от 300к", callback_data="бюджет_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -655,7 +655,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💰 Эконом",
+                                "label": "Бюджетный до 150к",
                                 "payload": "{\"command\": \"бюджет_эконом\"}"
                             },
                             "color": "primary"
@@ -663,7 +663,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💎 Стандарт",
+                                "label": "Стандарт от 150-300к",
                                 "payload": "{\"command\": \"бюджет_стандарт\"}"
                             },
                             "color": "primary"
@@ -673,7 +673,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "👑 Премиум",
+                                "label": "Премиум от 300к",
                                 "payload": "{\"command\": \"бюджет_премиум\"}"
                             },
                             "color": "primary"
@@ -958,11 +958,11 @@ class FurnitureBotCore:
 
         elif data.startswith("фурнитура_"):
             if data == "фурнитура_эконом":
-                user_data["hardware"] = "Эконом"
+                user_data["hardware"] = "Бюджетный до 150к"
             elif data == "фурнитура_стандарт":
-                user_data["hardware"] = "Стандарт"
+                user_data["hardware"] = "Стандарт от 150-300к"
             elif data == "фурнитура_премиум":
-                user_data["hardware"] = "Премиум"
+                user_data["hardware"] = "Премиум от 300к"
 
             user_data["current_step"] = "budget"
             await self.send_or_edit_message(
@@ -973,11 +973,11 @@ class FurnitureBotCore:
 
         elif data.startswith("бюджет_"):
             if data == "бюджет_эконом":
-                user_data["budget"] = "Эконом"
+                user_data["budget"] = "Бюджетный до 150к"
             elif data == "бюджет_стандарт":
-                user_data["budget"] = "Стандарт"
+                user_data["budget"] = "Стандарт от 150-300к"
             elif data == "бюджет_премиум":
-                user_data["budget"] = "Премиум"
+                user_data["budget"] = "Премиум от 300к"
 
             user_data["current_step"] = "deadline"
             await self.send_or_edit_message(
