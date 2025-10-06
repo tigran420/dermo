@@ -16,7 +16,7 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import requests
 
 TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
-TELEGRAM_CHAT_ID = "-1003166604153" # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
+TELEGRAM_CHAT_ID = "-1003166604153"
 VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
 VK_GROUP_ID = "233089872"
 
@@ -58,13 +58,30 @@ class Platform(Enum):
     VK = "vk"
 
 
-# Приветственное сообщение
+# Обновленное приветственное сообщение
 WELCOME_MESSAGE = """
-Приветствую вас!
-Наша компания занимается производством качественной мебели уже более 10 лет.
-Мы предлагаем широкий ассортимент продукции для любого интерьера.
+Приветствуем!🤝 На связи 2М ФАБРИКА МЕБЕЛИ! Мы изготавливаем корпусную и встроенную мебель с 1993 года, по индивидуальным размерам: кухни, шкафы-купе, гардеробные, мебель для ванной и многое другое. Собственное производство, работаем без посредников, делаем все сами от замера до установки. Широкий выбор материалов более 1000 расцветок, от ЛДСП до Эмали и фурнитуры (Blum, Hettich, Boyard и др.). Бесплатный замер, доставка и установка по городу. При установки НЕ БЕРЁМ платы за вырезы: под варочную поверхность, под сан узлы, под плинтуса, под мойку как это делают другие мебельные компании. Гарантия 24 месяца на всю продукцию! Цены приятно удивят! Рассрочка!!!
+
 Выберите категорию интересующей вас мебели:
 """
+
+# Ссылки на фотографии
+WELCOME_PHOTOS = [
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(2).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(3).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(4).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(5).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(6).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(7).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58.jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-59.jpg"
+]
+
+MATERIAL_PHOTOS = {
+    "лдсп": "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-06_15-58-59%20(2).jpg",
+    "агт": "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-06_15-58-59%20(3).jpg",
+    "эмаль": "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-06_15-58-59.jpg"
+}
 
 # Хранилище данных пользователя
 user_data = {}
@@ -641,9 +658,9 @@ class KeyboardManager:
     def get_budget_keyboard(platform: Platform, back_callback: str = "назад_предыдущий"):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Эконом", callback_data="бюджет_эконом")],
-                [InlineKeyboardButton("Стандарт", callback_data="бюджет_стандарт")],
-                [InlineKeyboardButton("Премиум", callback_data="бюджет_премиум")],
+                [InlineKeyboardButton("Эконом - доступные материалы, базовая фурнитура (до 150 тыс. руб.)", callback_data="бюджет_эконом")],
+                [InlineKeyboardButton("Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)", callback_data="бюджет_стандарт")],
+                [InlineKeyboardButton("Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)", callback_data="бюджет_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -655,15 +672,17 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💰 Эконом",
+                                "label": "💰 Эконом - до 150 тыс.",
                                 "payload": "{\"command\": \"бюджет_эконом\"}"
                             },
                             "color": "primary"
-                        },
+                        }
+                    ],
+                    [
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "💎 Стандарт",
+                                "label": "💎 Стандарт - 150-300 тыс.",
                                 "payload": "{\"command\": \"бюджет_стандарт\"}"
                             },
                             "color": "primary"
@@ -673,11 +692,13 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "👑 Премиум",
+                                "label": "👑 Премиум - от 300 тыс.",
                                 "payload": "{\"command\": \"бюджет_премиум\"}"
                             },
                             "color": "primary"
-                        },
+                        }
+                    ],
+                    [
                         {
                             "action": {
                                 "type": "callback",
@@ -769,6 +790,10 @@ class FurnitureBotCore:
         if platform in self.adapters:
             await self.adapters[platform].send_message(user_id, text, keyboard)
 
+    async def send_photo(self, platform: Platform, user_id: int, photo_url: str, caption: str = None):
+        if platform in self.adapters:
+            await self.adapters[platform].send_photo(user_id, photo_url, caption)
+
     async def edit_message(self, platform: Platform, user_id: int, message_id: int, text: str, keyboard=None):
         if platform in self.adapters:
             await self.adapters[platform].edit_message(user_id, message_id, text, keyboard)
@@ -784,10 +809,23 @@ class FurnitureBotCore:
 
     async def handle_start(self, platform: Platform, user_id: int):
         self.clear_user_data(user_id)
-        await self.send_message(
-            platform, user_id, WELCOME_MESSAGE,
-            KeyboardManager.get_initial_keyboard(platform)
-        )
+        
+        # Отправляем приветственные фото
+        if platform == Platform.TELEGRAM:
+            # В Telegram отправляем несколько фото
+            for i, photo_url in enumerate(WELCOME_PHOTOS[:3]):  # Отправляем первые 3 фото
+                try:
+                    caption = WELCOME_MESSAGE if i == 0 else None
+                    await self.send_photo(platform, user_id, photo_url, caption)
+                    await asyncio.sleep(0.5)  # Небольшая задержка между фото
+                except Exception as e:
+                    logger.error(f"Ошибка отправки фото {i}: {e}")
+        else:
+            # В VK отправляем только сообщение с клавиатурой
+            await self.send_message(
+                platform, user_id, WELCOME_MESSAGE,
+                KeyboardManager.get_initial_keyboard(platform)
+            )
 
     async def request_name(self, platform: Platform, user_id: int, message_id: int = None):
         text = "👤 **Контактные данные**\n\nПожалуйста, напишите ваше имя:"
@@ -935,19 +973,33 @@ class FurnitureBotCore:
                 )
             elif category in ["гардеробная", "прихожая", "ванная", "шкаф", "другое"]:
                 user_data["current_step"] = "budget"
+                budget_message = (
+                    "💰 **Бюджет**\n\nВыберите бюджет:\n\n"
+                    "• Эконом - доступные материалы, базовая фурнитура (до 150 тыс. руб.)\n"
+                    "• Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)\n"  
+                    "• Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)"
+                )
                 await self.send_or_edit_message(
                     platform, user_id, message_id,
-                    "💰 **Бюджет**\n\nВыберите бюджет:",
+                    budget_message,
                     KeyboardManager.get_budget_keyboard(platform, back_callback="назад_размер")
                 )
 
         elif data.startswith("материал_"):
+            material_type = data.replace("материал_", "")
             if data == "материал_лдсп":
                 user_data["material"] = "ЛДСП"
             elif data == "материал_агт":
                 user_data["material"] = "АГТ"
             elif data == "материал_эмаль":
                 user_data["material"] = "Эмаль"
+
+            # Отправляем фото материала
+            if material_type in MATERIAL_PHOTOS and platform == Platform.TELEGRAM:
+                photo_url = MATERIAL_PHOTOS[material_type]
+                caption = f"🎨 **Материал: {user_data['material']}**\n\nПример нашего качества:"
+                await self.send_photo(platform, user_id, photo_url, caption)
+                await asyncio.sleep(0.5)
 
             user_data["current_step"] = "hardware"
             await self.send_or_edit_message(
@@ -965,9 +1017,15 @@ class FurnitureBotCore:
                 user_data["hardware"] = "Премиум"
 
             user_data["current_step"] = "budget"
+            budget_message = (
+                "💰 **Бюджет**\n\nВыберите бюджет:\n\n"
+                "• Эконом - доступные материалы, базовая фурнитура (до 150 тыс. руб.)\n"
+                "• Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)\n"  
+                "• Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)"
+            )
             await self.send_or_edit_message(
                 platform, user_id, message_id,
-                "💰 **Бюджет**\n\nВыберите бюджет:",
+                budget_message,
                 KeyboardManager.get_budget_keyboard(platform, back_callback="назад_фурнитура")
             )
 
@@ -994,9 +1052,15 @@ class FurnitureBotCore:
                 user_data["cabinet_type"] = "Купе"
 
             user_data["current_step"] = "budget"
+            budget_message = (
+                "💰 **Бюджет**\n\nВыберите бюджет:\n\n"
+                "• Эконом - доступные материалы, базовая фурнитура (до 150 тыс. руб.)\n"
+                "• Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)\n"  
+                "• Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)"
+            )
             await self.send_or_edit_message(
                 platform, user_id, message_id,
-                "💰 **Бюджет**\n\nВыберите бюджет:",
+                budget_message,
                 KeyboardManager.get_budget_keyboard(platform, back_callback="назад_тип")
             )
 
@@ -1256,9 +1320,15 @@ class FurnitureBotCore:
             user_data["other_furniture_description"] = text
             user_data["waiting_for"] = None
             user_data["current_step"] = "budget"
+            budget_message = (
+                "💰 **Бюджет**\n\nВыберите бюджет:\n\n"
+                "• Эконом - доступные материалы, базовая фурнитура (до 150 тыс. руб.)\n"
+                "• Стандарт - оптимальное соотношение цены и качества (от 150 -300 тыс. руб.)\n"  
+                "• Премиум - эксклюзивные материалы, сложные конструкции, премиальная фурнитура (от 300 тыс. руб.)"
+            )
             await self.send_or_edit_message(
                 platform, user_id, None,
-                "💰 **Бюджет**\n\nВыберите бюджет:",
+                budget_message,
                 KeyboardManager.get_budget_keyboard(platform, back_callback="назад_другое")
             )
             return
@@ -1369,10 +1439,22 @@ class TelegramAdapter:
             await self.bot_core.send_final_summary(Platform.TELEGRAM, user_id)
 
     async def send_message(self, user_id: int, text: str, keyboard=None):
-        # Убираем parse_mode чтобы избежать ошибок с Markdown
         await self.application.bot.send_message(
             chat_id=user_id, text=text, reply_markup=keyboard
         )
+
+    async def send_photo(self, user_id: int, photo_url: str, caption: str = None):
+        try:
+            await self.application.bot.send_photo(
+                chat_id=user_id,
+                photo=photo_url,
+                caption=caption
+            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки фото в Telegram: {e}")
+            # Если не удалось отправить фото, отправляем текстовое сообщение
+            if caption:
+                await self.send_message(user_id, caption)
 
     async def edit_message(self, user_id: int, message_id: int, text: str, keyboard=None):
         await self.application.bot.edit_message_text(
@@ -1394,6 +1476,14 @@ class VKAdapter:
 
     def run(self):
         logger.info("Запуск VK бота через Long Poll...")
+        while True:
+            try:
+                self._run()
+            except Exception as e:
+                logger.error(f"VK бот упал с ошибкой: {e}. Перезапуск через 10 секунд.")
+                time.sleep(10)
+
+    def _run(self):
         try:
             longpoll = VkBotLongPoll(self.vk_session, self.group_id)
             logger.info("✓ Long Poll подключен успешно!")
@@ -1414,6 +1504,7 @@ class VKAdapter:
             logger.error(f"Ошибка VK бота: {e}")
             import traceback
             logger.error(f"Детали: {traceback.format_exc()}")
+            raise  # Перезапускаем бота
 
     def handle_message(self, event):
         """Обработка текстовых сообщений"""
@@ -1542,6 +1633,15 @@ class VKAdapter:
             logger.error(f"VK: Ошибка отправки: {e}")
             import traceback
             logger.error(f"VK: Детали: {traceback.format_exc()}")
+
+    async def send_photo(self, user_id: int, photo_url: str, caption: str = None):
+        """Отправка фото в VK"""
+        try:
+            # В VK отправляем сообщение со ссылкой на фото
+            message = caption + f"\n\n📸 Фото: {photo_url}" if caption else f"📸 Фото: {photo_url}"
+            await self.send_message(user_id, message)
+        except Exception as e:
+            logger.error(f"Ошибка отправки фото в VK: {e}")
 
     async def edit_message(self, user_id: int, message_id: int, text: str, keyboard=None):
         """В VK через Long Poll нельзя редактировать, отправляем новое"""
