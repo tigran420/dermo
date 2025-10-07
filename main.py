@@ -46,23 +46,35 @@ def send_telegram_application(application_data):
         logging.warning("Telegram bot token or chat ID not configured. Skipping sending application to Telegram group.")
         return
 
+    # Начало текста заявки
     message_text = "📩 Новая заявка:\n\n"
-    for key, value in application_data.items():
-        message_text += f"{key}: {value}\n"
 
+    # Исключаем служебные поля
+    exclude_keys = {"current_step", "waiting_for"}
+
+    # Добавляем только полезные данные
+    for key, value in application_data.items():
+        if key not in exclude_keys and value not in [None, "", "Не указано"]:
+            message_text += f"{key}: {value}\n"
+
+    # URL для запроса Telegram API
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+
+    # Формируем тело запроса
     payload = {
-        "chat_id": TELEGRAM_CHAT_ID,  # ⚠️ Добавлено
+        "chat_id": TELEGRAM_CHAT_ID,  # ID твоей группы
         "text": message_text,
         "parse_mode": "HTML"
     }
 
+    # Отправляем заявку
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
         logging.info(f"✅ Заявка успешно отправлена в Telegram-группу: {response.json()}")
     except requests.exceptions.RequestException as e:
         logging.error(f"❌ Ошибка отправки заявки в Telegram-группу: {e}")
+
 
 
 
