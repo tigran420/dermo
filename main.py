@@ -1497,7 +1497,7 @@ class VKAdapter:
             for event in longpoll.listen():
                 logger.info(f"VK: Получено событие типа: {event.type}")
 
-                if event.type == VkBotEventType.MESSAGE_NEW:
+                if event.type == VkBotEventType.MESSAGE_NEW and not event.from_chat:
                     self.handle_message(event)
                 elif event.type == VkBotEventType.MESSAGE_EVENT:
                     self.handle_callback(event)
