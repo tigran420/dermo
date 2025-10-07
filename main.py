@@ -42,25 +42,28 @@ MATERIAL_PHOTOS = {
 
 # В функции send_telegram_application используйте TELEGRAM_TOKEN вместо TELEGRAM_BOT_TOKEN
 def send_telegram_application(application_data):
-    if not TELEGRAM_TOKEN:
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         logging.warning("Telegram bot token or chat ID not configured. Skipping sending application to Telegram group.")
         return
 
-    message_text = "Новая заявка:\n\n"
+    message_text = "📩 Новая заявка:\n\n"
     for key, value in application_data.items():
         message_text += f"{key}: {value}\n"
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
+        "chat_id": TELEGRAM_CHAT_ID,  # ⚠️ Добавлено
         "text": message_text,
         "parse_mode": "HTML"
     }
+
     try:
         response = requests.post(url, json=payload)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        logging.info(f"Application successfully sent to Telegram group: {response.json()}")
+        response.raise_for_status()
+        logging.info(f"✅ Заявка успешно отправлена в Telegram-группу: {response.json()}")
     except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to send application to Telegram group: {e}")
+        logging.error(f"❌ Ошибка отправки заявки в Telegram-группу: {e}")
+
 
 
 from vk_api.utils import get_random_id  # type: ignore
