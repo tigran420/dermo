@@ -8,22 +8,41 @@ from enum import Enum
 from typing import Dict, Any
 
 # VK imports
-import vk_api
+import vk_api  # type: ignore
 # Telegram imports
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
-import requests
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, \
+    InputMediaPhoto  # type: ignore
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, \
+    filters  # type: ignore
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType  # type: ignore
+import requests  # type: ignore
 
 TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
 VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
 VK_GROUP_ID = "233089872"
+# URL изображений
+WELCOME_PHOTOS = [
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(2).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(3).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(4).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(5).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(6).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58%20(7).jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-58.jpg",
+    "https://raw.githubusercontent.com/tigran420/dermo/5be79081c7a6fa620a49671bf22703d98c6d9020/photo_2025-10-05_16-08-59.jpg",
+    # user provided 9th maybe duplicate; keep it if exists
+]
+MATERIAL_PHOTOS = {
+    "лдсп": "https://raw.githubusercontent.com/tigran420/dermo/main/photo_2025-10-06_15-58-59%20(2).jpg",
+    "агт": "https://raw.githubusercontent.com/tigran420/dermo/main/photo_2025-10-06_15-58-59.jpg",
+    "эмаль": "https://raw.githubusercontent.com/tigran420/dermo/main/photo_2025-10-06_15-58-59%20(3).jpg"
+}
 
 
 # В функции send_telegram_application используйте TELEGRAM_TOKEN вместо TELEGRAM_BOT_TOKEN
 def send_telegram_application(application_data):
-    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+    if not TELEGRAM_TOKEN:
         logging.warning("Telegram bot token or chat ID not configured. Skipping sending application to Telegram group.")
         return
 
@@ -33,7 +52,6 @@ def send_telegram_application(application_data):
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
         "text": message_text,
         "parse_mode": "HTML"
     }
@@ -45,7 +63,7 @@ def send_telegram_application(application_data):
         logging.error(f"Failed to send application to Telegram group: {e}")
 
 
-from vk_api.utils import get_random_id
+from vk_api.utils import get_random_id  # type: ignore
 
 # Настройка логирования
 logging.basicConfig(
@@ -61,19 +79,19 @@ class Platform(Enum):
 
 
 # Приветственное сообщение
-WELCOME_MESSAGE = """
-Приветствуем!🤝
-На связи 2М ФАБРИКА МЕБЕЛИ!
-Мы изготавливаем корпусную и встроенную мебель с 1993 года, по индивидуальным размерам: 
-кухни, шкафы-купе, гардеробные, мебель для ванной и многое другое.
-Собственное производство, работаем без посредников, делаем все сами от замера до установки.
-Широкий выбор материалов более 1000 расцветок, от ЛДСП до Эмали и фурнитуры (Blum, Hettich, Boyard и др.).
-Бесплатный замер, доставка и установка по городу. 
-При установки НЕ БЕРЁМ платы за вырезы: под варочную поверхность, под сан узлы, под плинтуса, под мойку как это делают другие мебельные компании.
-Гарантия 24 месяца на всю продукцию!
-Цены приятно удивят!
-Рассрочка!!!
-"""
+WELCOME_MESSAGE = (
+    "Приветствуем!🤝\n"
+    "На связи 2М ФАБРИКА МЕБЕЛИ!\n"
+    "Мы изготавливаем корпусную и встроенную мебель с 1993 года, по индивидуальным размерам:\n"
+    "кухни, шкафы-купе, гардеробные, мебель для ванной и многое другое.\n"
+    "Собственное производство, работаем без посредников, делаем все сами от замера до установки.\n"
+    "Широкий выбор материалов более 1000 расцветок, от ЛДСП до Эмали и фурнитуры (Blum, Hettich, Boyard и др.).\n"
+    "Бесплатный замер, доставка и установка по городу.\n"
+    "При установки НЕ БЕРЁМ платы за вырезы: под варочную поверхность, под сан узлы, под плинтуса, под мойку как это делают другие мебельные компании.\n"
+    "Гарантия 24 месяца на всю продукцию!\n"
+    "Цены приятно удивят!\n"
+    "Рассрочка!!!"
+)
 
 # Хранилище данных пользователя
 user_data = {}
@@ -594,9 +612,9 @@ class KeyboardManager:
     def get_hardware_keyboard(platform: Platform):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Бюджетный до 150к", callback_data="фурнитура_эконом")],
-                [InlineKeyboardButton("Стандарт от 150-300к", callback_data="фурнитура_стандарт")],
-                [InlineKeyboardButton("Премиум от 300к", callback_data="фурнитура_премиум")],
+                [InlineKeyboardButton("Эконом", callback_data="фурнитура_эконом")],
+                [InlineKeyboardButton("Стандарт", callback_data="фурнитура_стандарт")],
+                [InlineKeyboardButton("Премиум", callback_data="фурнитура_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data="назад_материал")]
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -608,7 +626,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Бюджетный до 150к",
+                                "label": "💰 Эконом",
                                 "payload": "{\"command\": \"фурнитура_эконом\"}"
                             },
                             "color": "primary"
@@ -616,7 +634,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Стандарт от 150-300к",
+                                "label": "💎 Стандарт",
                                 "payload": "{\"command\": \"фурнитура_стандарт\"}"
                             },
                             "color": "primary"
@@ -626,7 +644,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Премиум от 300к",
+                                "label": "👑 Премиум",
                                 "payload": "{\"command\": \"фурнитура_премиум\"}"
                             },
                             "color": "primary"
@@ -648,9 +666,9 @@ class KeyboardManager:
     def get_budget_keyboard(platform: Platform, back_callback: str = "назад_предыдущий"):
         if platform == Platform.TELEGRAM:
             keyboard = [
-                [InlineKeyboardButton("Бюджетный до 150к", callback_data="бюджет_эконом")],
-                [InlineKeyboardButton("Стандарт от 150-300к", callback_data="бюджет_стандарт")],
-                [InlineKeyboardButton("Премиум от 300к", callback_data="бюджет_премиум")],
+                [InlineKeyboardButton("Эконом - (до 150 тыс руб)", callback_data="бюджет_эконом")],
+                [InlineKeyboardButton("Стандарт - (150-300 тыс руб)", callback_data="бюджет_стандарт")],
+                [InlineKeyboardButton("Премиум - (от 300 тыс руб)", callback_data="бюджет_премиум")],
                 [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)]
             ]
             return InlineKeyboardMarkup(keyboard)
@@ -662,7 +680,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Бюджетный до 150к",
+                                "label": "💰 Эконом - (до 150 тыс руб)",
                                 "payload": "{\"command\": \"бюджет_эконом\"}"
                             },
                             "color": "primary"
@@ -670,7 +688,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Стандарт от 150-300к",
+                                "label": "💎 Стандарт - (150-300 тыс руб)",
                                 "payload": "{\"command\": \"бюджет_стандарт\"}"
                             },
                             "color": "primary"
@@ -680,7 +698,7 @@ class KeyboardManager:
                         {
                             "action": {
                                 "type": "callback",
-                                "label": "Премиум от 300к",
+                                "label": "👑 Премиум - (от 300 тыс руб)",
                                 "payload": "{\"command\": \"бюджет_премиум\"}"
                             },
                             "color": "primary"
@@ -791,8 +809,11 @@ class FurnitureBotCore:
 
     async def handle_start(self, platform: Platform, user_id: int):
         self.clear_user_data(user_id)
-        await self.send_message(
-            platform, user_id, WELCOME_MESSAGE,
+
+        await self.send_photo_album(
+            platform, user_id,
+            WELCOME_PHOTOS,
+            WELCOME_MESSAGE,
             KeyboardManager.get_initial_keyboard(platform)
         )
 
@@ -935,11 +956,7 @@ class FurnitureBotCore:
 
             if category == "кухня":
                 user_data["current_step"] = "material"
-                await self.send_or_edit_message(
-                    platform, user_id, message_id,
-                    "🎨 **Материал фасадов**\n\nВыберите материал:",
-                    KeyboardManager.get_material_keyboard(platform)
-                )
+                await self.send_material_options(platform, user_id, message_id)
             elif category in ["гардеробная", "прихожая", "ванная", "шкаф", "другое"]:
                 user_data["current_step"] = "budget"
                 await self.send_or_edit_message(
@@ -956,20 +973,26 @@ class FurnitureBotCore:
             elif data == "материал_эмаль":
                 user_data["material"] = "Эмаль"
 
+            # Отправляем фото выбранного материала
+            material_key = data.replace("материал_", "")
+            photo_url = MATERIAL_PHOTOS.get(material_key)
+            if photo_url:
+                await self.send_photo_album(platform, user_id, [photo_url], f"📸 Материал: {user_data['material']}")
+
             user_data["current_step"] = "hardware"
-            await self.send_or_edit_message(
-                platform, user_id, message_id,
+            await self.send_message(
+                platform, user_id,
                 "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
                 KeyboardManager.get_hardware_keyboard(platform)
             )
 
         elif data.startswith("фурнитура_"):
             if data == "фурнитура_эконом":
-                user_data["hardware"] = "Бюджетный до 150к"
+                user_data["hardware"] = "Эконом"
             elif data == "фурнитура_стандарт":
-                user_data["hardware"] = "Стандарт от 150-300к"
+                user_data["hardware"] = "Стандарт"
             elif data == "фурнитура_премиум":
-                user_data["hardware"] = "Премиум от 300к"
+                user_data["hardware"] = "Премиум"
 
             user_data["current_step"] = "budget"
             await self.send_or_edit_message(
@@ -980,11 +1003,11 @@ class FurnitureBotCore:
 
         elif data.startswith("бюджет_"):
             if data == "бюджет_эконом":
-                user_data["budget"] = "Бюджетный до 150к"
+                user_data["budget"] = "Эконом"
             elif data == "бюджет_стандарт":
-                user_data["budget"] = "Стандарт от 150-300к"
+                user_data["budget"] = "Стандарт"
             elif data == "бюджет_премиум":
-                user_data["budget"] = "Премиум от 300к"
+                user_data["budget"] = "Премиум"
 
             user_data["current_step"] = "deadline"
             await self.send_or_edit_message(
@@ -1074,11 +1097,34 @@ class FurnitureBotCore:
             self.clear_user_data(user_id)
             await self.handle_start(platform, user_id)
 
+    async def send_material_options(self, platform: Platform, user_id: int, message_id: int = None):
+        """Отправка фото материалов и клавиатуры выбора материалов"""
+        # Сначала отправляем сообщение с клавиатурой
+        await self.send_or_edit_message(
+            platform, user_id, message_id,
+            "🎨 **Материал фасадов**\n\nВыберите материал:",
+            KeyboardManager.get_material_keyboard(platform)
+        )
+
+        # Затем отправляем все фото материалов отдельными сообщениями
+        for material_name, photo_url in MATERIAL_PHOTOS.items():
+            material_display_name = material_name.upper()
+            await self.send_photo_album(
+                platform, user_id,
+                [photo_url],
+                f"📸 Материал: {material_display_name}"
+            )
+
     async def send_or_edit_message(self, platform: Platform, user_id: int, message_id: int, text: str, keyboard=None):
         if message_id and platform == Platform.TELEGRAM:  # Only edit message for Telegram
             await self.edit_message(platform, user_id, message_id, text, keyboard)
         else:
             await self.send_message(platform, user_id, text, keyboard)
+
+    async def send_photo_album(self, platform: Platform, user_id: int, photo_urls: list, text: str, keyboard=None):
+        """Отправка альбома фото с текстом одним сообщением"""
+        if platform in self.adapters:
+            await self.adapters[platform].send_photo_album(user_id, photo_urls, text, keyboard)
 
     async def handle_back_button(self, platform: Platform, user_id: int, data: str, message_id: int = None):
         back_step = data.replace("назад_", "")
@@ -1158,11 +1204,7 @@ class FurnitureBotCore:
                 )
 
         elif back_step == "материал":
-            await self.send_or_edit_message(
-                platform, user_id, message_id,
-                "🎨 **Материал фасадов**\n\nВыберите материал:",
-                KeyboardManager.get_material_keyboard(platform)
-            )
+            await self.send_material_options(platform, user_id, message_id)
 
         elif back_step == "фурнитура":
             await self.send_or_edit_message(
@@ -1364,6 +1406,37 @@ class TelegramAdapter:
             update.message.text
         )
 
+    async def send_photo_album(self, user_id: int, photo_urls: list, text: str, keyboard=None):
+        try:
+            if len(photo_urls) == 1:
+                # Если только одно фото — отправляем обычным способом
+                await self.application.bot.send_photo(
+                    chat_id=user_id,
+                    photo=photo_urls[0],
+                    caption=text
+                )
+            else:
+                # Если фото несколько — создаём медиагруппу
+                media_group = []
+                for i, photo_url in enumerate(photo_urls[:10]):  # максимум 10 фото
+                    if i == 0:
+                        media_group.append(InputMediaPhoto(media=photo_url, caption=text))
+                    else:
+                        media_group.append(InputMediaPhoto(media=photo_url))
+
+                await self.application.bot.send_media_group(
+                    chat_id=user_id,
+                    media=media_group
+                )
+
+            # Отправляем клавиатуру отдельным сообщением (если есть)
+            if keyboard:
+                await self.send_message(user_id, "Выберите категорию:", keyboard)
+
+        except Exception as e:
+            logger.error(f"Ошибка отправки фото(альбома) в Telegram: {e}")
+            await self.send_message(user_id, text, keyboard)
+
     async def handle_contact(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         user_data = self.bot_core.get_user_data(user_id)
@@ -1500,6 +1573,76 @@ class VKAdapter:
 
         except Exception as e:
             logger.error(f"Ошибка process_message: {e}")
+
+    async def send_photo_album(self, user_id: int, photo_urls: list, text: str, keyboard=None):
+        try:
+            attachments = []
+
+            # Загружаем все фото (VK ограничение - 10 вложений)
+            for photo_url in photo_urls[:10]:
+                attachment = await self.upload_photo(photo_url)
+                if attachment:
+                    attachments.append(attachment)
+
+            params = {
+                "user_id": user_id,
+                "message": text,
+                "random_id": get_random_id(),
+                "dont_parse_links": 1
+            }
+
+            if attachments:
+                params["attachment"] = ",".join(attachments)
+                logger.info(f"VK: Добавлены {len(attachments)} фото в альбом")
+
+            if keyboard:
+                params["keyboard"] = keyboard
+
+            result = self.vk.messages.send(**params)
+            logger.info(f"VK: Фотоальбом отправлен одним сообщением! ID: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"VK: Ошибка отправки фотоальбома: {e}")
+            await self.send_message(user_id, text, keyboard)
+
+    async def upload_photo(self, photo_url: str):
+        """Загружает фото по URL и возвращает attachment строку для VK"""
+        try:
+            logger.info(f"VK: Загрузка фото из URL: {photo_url}")
+
+            # Скачиваем фото
+            response = requests.get(photo_url, timeout=10)
+            response.raise_for_status()
+
+            # Получаем URL для загрузки
+            upload_url = self.vk.photos.getMessagesUploadServer()['upload_url']
+
+            # Загружаем фото на сервер VK
+            files = {'photo': ('photo.jpg', response.content, 'image/jpeg')}
+            upload_response = requests.post(upload_url, files=files, timeout=10)
+            upload_response.raise_for_status()
+            upload_data = upload_response.json()
+
+            # Сохраняем фото
+            save_response = self.vk.photos.saveMessagesPhoto(
+                server=upload_data['server'],
+                photo=upload_data['photo'],
+                hash=upload_data['hash']
+            )
+
+            if save_response:
+                photo = save_response[0]
+                attachment = f"photo{photo['owner_id']}_{photo['id']}"
+                logger.info(f"VK: Фото успешно загружено: {attachment}")
+                return attachment
+            else:
+                logger.error("VK: Ошибка сохранения фото")
+                return None
+
+        except Exception as e:
+            logger.error(f"VK: Ошибка загрузки фото: {e}")
+            return None
 
     async def process_callback(self, user_id: int, command: str):
         """Обработка callback команды"""
