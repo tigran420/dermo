@@ -33,11 +33,10 @@ from telegram.ext import ( # type: ignore
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType  # type: ignore
 import requests  # type: ignore
 
-TELEGRAM_TOKEN = "7912680613:AAH_7SLbjywJk2fqLIes9JTfrv940kHGnCE"
+TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
-
-VK_TOKEN = "vk1.a.Zpg9wzHaNYM4K0-F3KvYs2ValUpkHXkkU0ClznSTRt_9C5Lbvi36nYiaPz41e7eVyndY0fSbvYDPfZbvp1P_VYC4PlrBrnfGQ1IAJdb4aJhZMB8odobM4BZQgOqfZUybdJR-g_FWg2tLJBkpq4YKchVevXgcU90-9SZxqVmufumLmnZB-RNe3eoiifZNRPqba_cUa76fk-3d0fy1zj3daA"
-VK_GROUP_ID = "233147090"
+VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
+VK_GROUP_ID = "233089872"
 
 # URL изображений
 WELCOME_PHOTOS = [
