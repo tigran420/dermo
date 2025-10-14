@@ -191,6 +191,38 @@ class KeyboardManager:
             return json.dumps(keyboard, ensure_ascii=False)
 
     @staticmethod
+    def get_service_keyboard(platform: Platform):
+        if platform == Platform.TELEGRAM:
+            # Для Telegram не используется
+            return None
+        else:  # VK
+            keyboard = {
+                "inline": True,
+                "buttons": [
+                    [
+                        {
+                            "action": {"type": "callback", "label": "📏 Замеры", 
+                                      "payload": "{\"command\": \"услуга_замеры\"}"},
+                            "color": "positive"
+                        },
+                        {
+                            "action": {"type": "callback", "label": "💰 Рассчитать стоимость", 
+                                      "payload": "{\"command\": \"услуга_стоимость\"}"},
+                            "color": "primary"
+                        }
+                    ],
+                    [
+                        {
+                            "action": {"type": "callback", "label": "🔙 Назад", 
+                                      "payload": "{\"command\": \"назад_сроки\"}"},
+                            "color": "negative"
+                        }
+                    ]
+                ],
+            }
+            return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
     def get_categories_keyboard(platform: Platform):
         # This method is now redundant, get_initial_keyboard will be used for categories
         return KeyboardManager.get_initial_keyboard(platform)
@@ -508,13 +540,13 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "💰 Эконом - (до 150 тыс руб)",
+                        {"action": {"type": "callback", "label": "💰 Эконом",
                                     "payload": "{\"command\": \"бюджет_эконом\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "💎 Стандарт - (150-300 тыс руб)",
+                        {"action": {"type": "callback", "label": "💎 Стандарт",
                                     "payload": "{\"command\": \"бюджет_стандарт\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "👑 Премиум - (от 300 тыс руб)",
+                        {"action": {"type": "callback", "label": "👑 Премиум",
                                     "payload": "{\"command\": \"бюджет_премиум\"}"}, "color": "primary"},
                         {"action": {"type": "callback", "label": "🔙 Назад",
                                     "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
@@ -590,6 +622,19 @@ class FurnitureBotCore:
             platform, user_id, WELCOME_PHOTOS, WELCOME_MESSAGE, KeyboardManager.get_initial_keyboard(platform)
         )
 
+    async def request_service_type(self, platform: Platform, user_id: int, message_id: int = None):
+        """Запрос типа услуги для VK (после всех этапов выбора мебели)"""
+        if platform != Platform.VK:
+            return
+            
+        text = "📋 **Выберите услугу:**\n\n• 📏 Замеры - наш специалист приедет для точных замеров\n• 💰 Рассчитать стоимость - предварительный расчет стоимости мебели"
+        
+        if message_id:
+            await self.edit_message(platform, user_id, message_id, text, KeyboardManager.get_service_keyboard(platform))
+        else:
+            await self.send_message(platform, user_id, text, KeyboardManager.get_service_keyboard(platform))
+        self.get_user_data(user_id)["current_step"] = "service_type"
+
     async def request_name(self, platform: Platform, user_id: int, message_id: int = None):
         text = "👤 **Контактные данные**\n\nПожалуйста, напишите ваше имя:"
         if message_id and platform == Platform.TELEGRAM:
@@ -625,54 +670,90 @@ class FurnitureBotCore:
             await self.handle_back_button(platform, user_id, data, message_id)
             return
 
+        # Обработка выбора услуги (только для VK) - после всех этапов
+        if data.startswith("услуга_"):
+            if data == "услуга_замеры":
+                user_data_local["service_type"] = "Замеры"
+                await self.request_name(platform, user_id, message_id)
+                return
+            elif data == "услуга_стоимость":
+                user_data_local["service_type"] = "Рассчитать стоимость"
+                # Отправляем заявку в Telegram с пометкой "смотри VK"
+                user_data_local["note"] = "❗️СМОТРИ VK - нужна стоимость"
+                send_telegram_application(user_data_local)
+                
+                # Отправляем сообщение пользователю
+                cost_message = (
+                    "💰 **Расчет стоимости**\n\n"
+                    "Спасибо за интерес к нашим услугам! "
+                    "Наш администратор уже уведомлен и скоро свяжется с вами "
+                    "для предварительного расчета стоимости.\n\n"
+                    "Мы учтем все ваши пожелания и предоставим "
+                    "подробную информацию о стоимости выбранной мебели."
+                )
+                await self.send_or_edit_message(platform, user_id, message_id, cost_message)
+                
+                # Предлагаем начать заново
+                await asyncio.sleep(2)
+                await self.send_message(
+                    platform, user_id, 
+                    "Хотите оформить заявку на замеры или выбрать другую мебель?",
+                    KeyboardManager.get_initial_keyboard(platform)
+                )
+                self.clear_user_data(user_id)
+                return
+
         # Обработка кнопки "Свяжитесь со мной"
         if data == "связаться_со_мной":
             user_data_local["category"] = "связаться_со_мной"
-            await self.request_name(platform, user_id, message_id)
+            # Для VK переходим сразу к выбору услуги
+            if platform == Platform.VK:
+                await self.request_service_type(platform, user_id, message_id)
+            else:
+                # Для Telegram оставляем старую логику
+                await self.request_name(platform, user_id, message_id)
             return
 
         # Обработка выбора категории
-        if data == "кухня":
-            user_data_local["category"] = "кухня"
-            user_data_local["current_step"] = "kitchen_type"
-            await self.send_or_edit_message(
-                platform, user_id, message_id, "🏠 **Кухня**\n\nВыберите тип кухни:",
-                KeyboardManager.get_kitchen_type_keyboard(platform)
-            )
-        elif data == "шкаф":
-            user_data_local["category"] = "шкаф"
-            user_data_local["current_step"] = "cabinet_type"
-            await self.send_or_edit_message(
-                platform, user_id, message_id, "🚪 **Шкаф**\n\nВыберите тип шкафа:",
-                KeyboardManager.get_cabinet_type_keyboard(platform)
-            )
-        elif data == "гардеробная":
-            user_data_local["category"] = "гардеробная"
-            user_data_local["current_step"] = "size"
-            await self.send_or_edit_message(
-                platform, user_id, message_id, "👔 **Гардеробная**\n\nКакие у вас размеры?",
-                KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории")
-            )
-        elif data == "прихожая":
-            user_data_local["category"] = "прихожая"
-            user_data_local["current_step"] = "hallway_type"
-            await self.send_or_edit_message(
-                platform, user_id, message_id, "🛋 **Прихожая**\n\nВыберите тип прихожей:",
-                KeyboardManager.get_hallway_type_keyboard(platform)
-            )
-        elif data == "ванная":
-            user_data_local["category"] = "ванная"
-            user_data_local["current_step"] = "bathroom_type"
-            await self.send_or_edit_message(
-                platform, user_id, message_id, "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
-                KeyboardManager.get_bathroom_type_keyboard(platform)
-            )
-        elif data == "другое":
-            user_data_local["category"] = "другое"
-            user_data_local["current_step"] = "other_furniture_text"
-            await self.send_or_edit_message(platform, user_id, message_id,
-                                            "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:")
-            user_data_local["waiting_for"] = "other_furniture_description"
+        if data in ["кухня", "шкаф", "гардеробная", "прихожая", "ванная", "другое"]:
+            user_data_local["category"] = data
+            
+            # Для обоих платформ продолжаем обычный процесс
+            if data == "кухня":
+                user_data_local["current_step"] = "kitchen_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, "🏠 **Кухня**\n\nВыберите тип кухни:",
+                    KeyboardManager.get_kitchen_type_keyboard(platform)
+                )
+            elif data == "шкаф":
+                user_data_local["current_step"] = "cabinet_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, "🚪 **Шкаф**\n\nВыберите тип шкафа:",
+                    KeyboardManager.get_cabinet_type_keyboard(platform)
+                )
+            elif data == "гардеробная":
+                user_data_local["current_step"] = "size"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, "👔 **Гардеробная**\n\nКакие у вас размеры?",
+                    KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории")
+                )
+            elif data == "прихожая":
+                user_data_local["current_step"] = "hallway_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                    KeyboardManager.get_hallway_type_keyboard(platform)
+                )
+            elif data == "ванная":
+                user_data_local["current_step"] = "bathroom_type"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                    KeyboardManager.get_bathroom_type_keyboard(platform)
+                )
+            elif data == "другое":
+                user_data_local["current_step"] = "other_furniture_text"
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:")
+                user_data_local["waiting_for"] = "other_furniture_description"
 
         # Обработка сценария КУХНЯ
         elif data.startswith("кухня_"):
@@ -769,7 +850,7 @@ class FurnitureBotCore:
                 user_data_local["hardware"] = "Премиум"
             user_data_local["current_step"] = "budget"
             await self.send_or_edit_message(
-                platform, user_id, message_id, "💰 **Бюджет**\n\nВыберите бюджет:",
+                platform, user_id, message_id, "💰 **Бюджет**\n\nВыберите бюджет: 💰 Эконом - (до 200 тыс руб)\n💎 Стандарт - (200-300 тыс руб)\n👑 Премиум - (от 300 тыс руб) ",
                 KeyboardManager.get_budget_keyboard(platform, back_callback="назад_фурнитура")
             )
 
@@ -798,7 +879,7 @@ class FurnitureBotCore:
                 KeyboardManager.get_budget_keyboard(platform, back_callback="назад_тип")
             )
 
-        # Обработка сроков заказа (переходим к запросу контактных данных)
+        # Обработка сроков заказа (переходим к запросу услуги для VK или имени для Telegram)
         elif data.startswith("срок_"):
             if data == "срок_месяц":
                 user_data_local["deadline"] = "Этот месяц"
@@ -808,8 +889,12 @@ class FurnitureBotCore:
                 user_data_local["deadline"] = "3 месяца"
             elif data == "срок_присмотр":
                 user_data_local["deadline"] = "Присматриваюсь"
-            # Запрашиваем имя
-            await self.request_name(platform, user_id, message_id)
+            
+            # Для VK переходим к выбору услуги, для Telegram - к запросу имени
+            if platform == Platform.VK:
+                await self.request_service_type(platform, user_id, message_id)
+            else:
+                await self.request_name(platform, user_id, message_id)
 
         # Обработка дополнительных кнопок для VK
         elif data == "ввести_телефон":
@@ -877,7 +962,13 @@ class FurnitureBotCore:
         back_step = data.replace("назад_", "")
         user_data_local = self.get_user_data(user_id)
 
-        if back_step == "категории":
+        if back_step == "услуга":
+            # Возврат к срокам с этапа выбора услуги
+            await self.send_or_edit_message(
+                platform, user_id, message_id, "📅 **Сроки заказа**\n\nВыберите сроки:",
+                KeyboardManager.get_deadline_keyboard(platform, back_callback="назад_бюджет")
+            )
+        elif back_step == "категории":
             self.clear_user_data(user_id)
             await self.send_or_edit_message(platform, user_id, message_id, WELCOME_MESSAGE,
                                             KeyboardManager.get_initial_keyboard(platform))
@@ -1047,7 +1138,8 @@ class FurnitureBotCore:
             summary += f"• Сроки: {user_data_local.get('deadline', 'Не указано')}\n"
 
         summary += f"• Имя: {user_data_local.get('name', 'Не указано')}\n"
-        summary += f"• Телефон: {user_data_local.get('phone', 'Не указано')}\n\n"
+        summary += f"• Телефон: {user_data_local.get('phone', 'Не указано')}\n"
+        summary += f"• Услуга: {user_data_local.get('service_type', 'Не указано')}\n\n"
 
         summary += "📞 Свяжитесь с нами:\n"
         summary += "💬 Телеграм: @max_lap555\n"
@@ -1465,7 +1557,7 @@ def main():
     # Запуск Telegram в главном потоке
     telegram_adapter.run()
 
-    logger.info("Оба бота запущены! Нажми Ctrl+C для остановки")
+    logger.info("Оба боты запущены! Нажми Ctrl+C для остановки")
 
     try:
         # Держим основной поток активным (на случай, если нужно что-то ещё)
