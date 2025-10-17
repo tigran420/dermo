@@ -458,6 +458,48 @@ class KeyboardManager:
             return json.dumps(keyboard, ensure_ascii=False)
 
     @staticmethod
+    def get_approximate_size_keyboard(platform: Platform, back_callback: str = "назад_размер"):
+        if platform == Platform.TELEGRAM:
+            keyboard = [
+                [InlineKeyboardButton("1,5 - 2 м", callback_data="размер_1.5_2")],
+                [InlineKeyboardButton("2 - 2,5 м", callback_data="размер_2_2.5")],
+                [InlineKeyboardButton("2,5 - 3 м", callback_data="размер_2.5_3")],
+                [InlineKeyboardButton("3 - 3,5 м", callback_data="размер_3_3.5")],
+                [InlineKeyboardButton("3,5 - 4 м", callback_data="размер_3.5_4")],
+                [InlineKeyboardButton("4 - 4,5 м", callback_data="размер_4_4.5")],
+                [InlineKeyboardButton("4,5 - 5 м", callback_data="размер_4.5_5")],
+                [InlineKeyboardButton("Более 5 м", callback_data="размер_более_5")],
+                [InlineKeyboardButton("↩️ Назад", callback_data=back_callback)],
+            ]
+            return InlineKeyboardMarkup(keyboard)
+        else:  # VK
+            keyboard = {
+                "inline": True,
+                "buttons": [
+                    [
+                        {"action": {"type": "callback", "label": "1,5 - 2 м", "payload": "{\"command\": \"размер_1.5_2\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "2 - 2,5 м", "payload": "{\"command\": \"размер_2_2.5\"}"}, "color": "primary"},
+                    ],
+                    [
+                        {"action": {"type": "callback", "label": "2,5 - 3 м", "payload": "{\"command\": \"размер_2.5_3\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "3 - 3,5 м", "payload": "{\"command\": \"размер_3_3.5\"}"}, "color": "primary"},
+                    ],
+                    [
+                        {"action": {"type": "callback", "label": "3,5 - 4 м", "payload": "{\"command\": \"размер_3.5_4\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "4 - 4,5 м", "payload": "{\"command\": \"размер_4_4.5\"}"}, "color": "primary"},
+                    ],
+                    [
+                        {"action": {"type": "callback", "label": "4,5 - 5 м", "payload": "{\"command\": \"размер_4.5_5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "Более 5 м", "payload": "{\"command\": \"размер_более_5\"}"}, "color": "primary"},
+                    ],
+                    [
+                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
+                    ],
+                ],
+            }
+            return json.dumps(keyboard, ensure_ascii=False)
+
+    @staticmethod
     def get_material_keyboard(platform: Platform):
         if platform == Platform.TELEGRAM:
             keyboard = [
@@ -697,7 +739,7 @@ class FurnitureBotCore:
                 await asyncio.sleep(2)
                 await self.send_message(
                     platform, user_id, 
-                    "Хотите оформить заявку на замеры или выбрать другую мебель?",
+                    "Хотите оформить ещё одну заявку на замеры или выбрать другую мебель?",
                     KeyboardManager.get_initial_keyboard(platform)
                 )
                 self.clear_user_data(user_id)
@@ -801,10 +843,36 @@ class FurnitureBotCore:
         elif data.startswith("размер_"):
             if data == "размер_точные":
                 user_data_local["size"] = "Точные"
+                user_data_local["waiting_for"] = "exact_size"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id, 
+                    "📏 **Точные размеры**\n\nПожалуйста, напишите точные размеры (например: 2.5м х 1.8м):"
+                )
+                return
             elif data == "размер_приблизительные":
                 user_data_local["size"] = "Приблизительные"
+                await self.send_or_edit_message(
+                    platform, user_id, message_id,
+                    "📐 **Приблизительные размеры**\n\nВыберите диапазон размеров:",
+                    KeyboardManager.get_approximate_size_keyboard(platform, back_callback="назад_размер")
+                )
+                return
             elif data == "размер_не_знаю":
                 user_data_local["size"] = "Не знаю"
+            elif data in ["размер_1.5_2", "размер_2_2.5", "размер_2.5_3", "размер_3_3.5", 
+                          "размер_3.5_4", "размер_4_4.5", "размер_4.5_5", "размер_более_5"]:
+                # Сохраняем выбранный диапазон размеров
+                size_map = {
+                    "размер_1.5_2": "1,5 - 2 м",
+                    "размер_2_2.5": "2 - 2,5 м", 
+                    "размер_2.5_3": "2,5 - 3 м",
+                    "размер_3_3.5": "3 - 3,5 м",
+                    "размер_3.5_4": "3,5 - 4 м",
+                    "размер_4_4.5": "4 - 4,5 м",
+                    "размер_4.5_5": "4,5 - 5 м",
+                    "размер_более_5": "Более 5 м"
+                }
+                user_data_local["approximate_size"] = size_map[data]
 
             # Определяем следующий шаг в зависимости от категории
             category = user_data_local.get("category", "")
@@ -1064,6 +1132,24 @@ class FurnitureBotCore:
             await self.handle_start(platform, user_id)
             return
 
+        # Если ожидаем точные размеры
+        if user_data_local.get("waiting_for") == "exact_size":
+            user_data_local["exact_size"] = text
+            user_data_local["waiting_for"] = None
+            
+            # Определяем следующий шаг в зависимости от категории
+            category = user_data_local.get("category", "")
+            if category == "кухня":
+                user_data_local["current_step"] = "material"
+                await self.send_material_options(platform, user_id)
+            elif category in ["гардеробная", "прихожая", "ванная", "шкаф", "другое"]:
+                user_data_local["current_step"] = "budget"
+                await self.send_or_edit_message(
+                    platform, user_id, None, "💰 **Бюджет**\n\nВыберите бюджет:",
+                    KeyboardManager.get_budget_keyboard(platform, back_callback="назад_размер")
+                )
+            return
+
         # Если ожидаем имя
         if user_data_local.get("waiting_for") == "name":
             user_data_local["name"] = text
@@ -1117,19 +1203,39 @@ class FurnitureBotCore:
         if category == "кухня":
             summary += f"• Тип кухни: {user_data_local.get('kitchen_type', 'Не указано')}\n"
             summary += f"• Размеры: {user_data_local.get('size', 'Не указано')}\n"
+            if user_data_local.get('size') == "Точные" and user_data_local.get('exact_size'):
+                summary += f"• Точные размеры: {user_data_local.get('exact_size', 'Не указано')}\n"
+            elif user_data_local.get('size') == "Приблизительные" and user_data_local.get('approximate_size'):
+                summary += f"• Приблизительные размеры: {user_data_local.get('approximate_size', 'Не указано')}\n"
             summary += f"• Материал: {user_data_local.get('material', 'Не указано')}\n"
             summary += f"• Фурнитура: {user_data_local.get('hardware', 'Не указано')}\n"
         elif category == "шкаф":
             summary += f"• Тип шкафа: {user_data_local.get('cabinet_type', 'Не указано')}\n"
             summary += f"• Размеры: {user_data_local.get('size', 'Не указано')}\n"
+            if user_data_local.get('size') == "Точные" and user_data_local.get('exact_size'):
+                summary += f"• Точные размеры: {user_data_local.get('exact_size', 'Не указано')}\n"
+            elif user_data_local.get('size') == "Приблизительные" and user_data_local.get('approximate_size'):
+                summary += f"• Приблизительные размеры: {user_data_local.get('approximate_size', 'Не указано')}\n"
         elif category == "гардеробная":
             summary += f"• Размеры: {user_data_local.get('size', 'Не указано')}\n"
+            if user_data_local.get('size') == "Точные" and user_data_local.get('exact_size'):
+                summary += f"• Точные размеры: {user_data_local.get('exact_size', 'Не указано')}\n"
+            elif user_data_local.get('size') == "Приблизительные" and user_data_local.get('approximate_size'):
+                summary += f"• Приблизительные размеры: {user_data_local.get('approximate_size', 'Не указано')}\n"
         elif category == "прихожая":
             summary += f"• Тип прихожей: {user_data_local.get('hallway_type', 'Не указано')}\n"
             summary += f"• Размеры: {user_data_local.get('size', 'Не указано')}\n"
+            if user_data_local.get('size') == "Точные" and user_data_local.get('exact_size'):
+                summary += f"• Точные размеры: {user_data_local.get('exact_size', 'Не указано')}\n"
+            elif user_data_local.get('size') == "Приблизительные" and user_data_local.get('approximate_size'):
+                summary += f"• Приблизительные размеры: {user_data_local.get('approximate_size', 'Не указано')}\n"
         elif category == "ванная":
             summary += f"• Тип мебели для ванной: {user_data_local.get('bathroom_type', 'Не указано')}\n"
             summary += f"• Размеры: {user_data_local.get('size', 'Не указано')}\n"
+            if user_data_local.get('size') == "Точные" and user_data_local.get('exact_size'):
+                summary += f"• Точные размеры: {user_data_local.get('exact_size', 'Не указано')}\n"
+            elif user_data_local.get('size') == "Приблизительные" and user_data_local.get('approximate_size'):
+                summary += f"• Приблизительные размеры: {user_data_local.get('approximate_size', 'Не указано')}\n"
         elif category == "другое":
             summary += f"• Описание мебели: {user_data_local.get('other_furniture_description', 'Не указано')}\n"
 
