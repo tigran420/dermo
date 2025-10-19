@@ -35,8 +35,8 @@ import requests  # type: ignore
 
 TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
-VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
-VK_GROUP_ID = "233089872"
+VK_TOKEN = "vk1.a.n4dL5gno1RVu0PQF9TzSbP6f-BKHcVlxZpvX6HIfX_tMW-w83pAHledqgAGDNrp-Ytuncm0TzZQYj_uiiX2S_up9eVvEzmhznIv8R5NP1momCUlVlCl8P4WthKeZM_sr86mVRimxeexXs0nCnAlO8C7IGRCtjvYbVUkLM9_DtDCb0qYWDSZImAO5qpr1ipbaXVjZV_FRsgKcGuO_UYJYDA"
+VK_GROUP_ID = "228885547"
 
 # URL изображений
 WELCOME_PHOTOS = [
@@ -1298,6 +1298,17 @@ class VKAdapter:
             import traceback
             logger.error(f"Детали: {traceback.format_exc()}")
 
+    def run_with_restart(self):
+        """Запускает VK бота с автоматическим перезапуском при ошибках"""
+        while True:
+            try:
+                logger.info("Запуск VK бота через Long Poll...")
+                self.run()
+            except Exception as e:
+                logger.error(f"VK бот упал с ошибкой: {e}")
+                logger.info("Перезапуск VK бота через 10 секунд...")
+                time.sleep(10)
+
     def handle_message(self, event):
         try:
             user_id = event.obj.message["from_id"]
@@ -1405,22 +1416,45 @@ def main():
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
     def run_vk():
-        vk_adapter.run()
+        """Запуск VK бота с автоматическим перезапуском"""
+        while True:
+            try:
+                logger.info("Запуск VK бота через Long Poll...")
+                vk_adapter.run()
+            except Exception as e:
+                logger.error(f"VK бот упал с ошибкой: {e}")
+                logger.info("Перезапуск VK бота через 10 секунд...")
+                time.sleep(10)
 
+    def run_telegram():
+        """Запуск Telegram бота с автоматическим перезапуском"""
+        while True:
+            try:
+                logger.info("Запуск Telegram бота...")
+                telegram_adapter.run()
+            except Exception as e:
+                logger.error(f"Telegram бот упал с ошибкой: {e}")
+                logger.info("Перезапуск Telegram бота через 10 секунд...")
+                time.sleep(10)
+
+    # Запускаем оба бота в отдельных потоках с автоматическим перезапуском
     vk_thread = threading.Thread(target=run_vk, daemon=True)
+    telegram_thread = threading.Thread(target=run_telegram, daemon=True)
+    
     vk_thread.start()
-    logger.info("VK: работает")
+    telegram_thread.start()
 
-    logger.info("Telegram: запускается в главном потоке")
-    telegram_adapter.run()
+    logger.info("✅ Оба бота запущены в режиме автоматического перезапуска!")
+    logger.info("📱 VK бот работает в отдельном потоке")
+    logger.info("📱 Telegram бот работает в отдельном потоке")
+    logger.info("🔄 Боты автоматически перезапустятся при любых ошибках")
 
-    logger.info("Оба боты запущены! Нажми Ctrl+C для остановки")
-
+    # Главный поток ждет завершения (которого никогда не будет)
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("\nОстановка ботов...")
+        logger.info("\n🛑 Получен сигнал прерывания. Остановка ботов...")
 
 if __name__ == "__main__":
     main()
