@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 import logging
@@ -1068,10 +1067,6 @@ class FurnitureBotCore:
         send_telegram_application(user_data_local)
         self.clear_user_data(user_id)
 
-# Остальной код остается без изменений (TelegramAdapter, VKAdapter, main функция)
-# [TelegramAdapter и VKAdapter классы остаются такими же как в предыдущем коде]
-# [main функция также остается без изменений]
-
 # Адаптер для Telegram
 class TelegramAdapter:
     def __init__(self, token: str, bot_core: FurnitureBotCore):
@@ -1298,35 +1293,6 @@ class VKAdapter:
             import traceback
             logger.error(f"Детали: {traceback.format_exc()}")
 
-    def run_with_restart(self):
-        """Запускает VK бота с автоматическим перезапуском при ошибках и защитой от дубликатов"""
-        import threading
-
-        if hasattr(self, "_is_running") and self._is_running:
-            logger.warning("⚠️ VK бот уже запущен — второй экземпляр не стартует.")
-            return
-
-        self._is_running = True
-        logger.info("✅ VK бот запускается с автоматическим перезапуском...")
-
-        while True:
-            try:
-                self.run()
-            except Exception as e:
-                msg = str(e)
-                if "Rate limit" in msg:
-                    logger.error(f"⚠️ VK API лимит! Ждём 60 секунд перед повтором...")
-                    time.sleep(60)
-                else:
-                    logger.error(f"❌ VK бот упал с ошибкой: {msg}")
-                    logger.info("Перезапуск VK бота через 10 секунд...")
-                    time.sleep(10)
-            finally:
-                # если поток был принудительно остановлен
-                if threading.main_thread().is_alive() is False:
-                    logger.info("🧹 Основной поток завершён, VK бот останавливается.")
-                    break
-
     def handle_message(self, event):
         try:
             user_id = event.obj.message["from_id"]
@@ -1438,7 +1404,7 @@ def main():
         while True:
             try:
                 logger.info("Запуск VK бота через Long Poll...")
-                vk_adapter.run()
+                vk_adapter.run()  # ← Только один вызов run()
             except Exception as e:
                 logger.error(f"VK бот упал с ошибкой: {e}")
                 logger.info("Перезапуск VK бота через 10 секунд...")
