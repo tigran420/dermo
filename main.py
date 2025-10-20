@@ -5,6 +5,10 @@ import threading
 import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
+import os
+import sys
+import atexit
+import signal
 
 # VK imports
 import vk_api  # type: ignore
@@ -52,6 +56,40 @@ WELCOME_PHOTOS = [
 MATERIAL_PHOTOS = {
     "Материалы": "https://raw.githubusercontent.com/Egorinho77/eban-/refs/heads/main/photo_2025-10-11_00-34-48.jpg",
 }
+
+# Глобальные переменные для защиты от дублирования
+CURRENT_PID = os.getpid()
+PID_FILE = "bot.pid"
+
+def setup_signal_handlers():
+    """Установка обработчиков сигналов для корректного завершения"""
+    def signal_handler(signum, frame):
+        logger.info(f"Получен сигнал {signum}. Завершение работы...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+def create_pid_file():
+    """Создание PID файла для предотвращения дублирования"""
+    if os.path.exists(PID_FILE):
+        with open(PID_FILE, 'r') as f:
+            old_pid = f.read().strip()
+            if old_pid and os.path.exists(f"/proc/{old_pid}"):
+                logger.error(f"⚠️ Бот уже запущен с PID {old_pid}. Завершаем текущий процесс.")
+                sys.exit(1)
+    
+    with open(PID_FILE, 'w') as f:
+        f.write(str(CURRENT_PID))
+    
+    atexit.register(cleanup_pid_file)
+    logger.info(f"✅ Создан PID файл с ID: {CURRENT_PID}")
+
+def cleanup_pid_file():
+    """Очистка PID файла при завершении"""
+    if os.path.exists(PID_FILE):
+        os.remove(PID_FILE)
+        logger.info("🧹 PID файл удален")
 
 def send_telegram_application(application_data):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -758,7 +796,7 @@ class FurnitureBotCore:
             photo_url = MATERIAL_PHOTOS.get(material_key)
             if photo_url:
                 await self.send_photo_album(platform, user_id, [photo_url],
-                                            f"Подробнее о материалах: {user_data_local['material']}")
+                                            f"Подробнее о материалаы: {user_data_local['material']}")
 
             user_data_local["current_step"] = "hardware"
             await self.send_message(platform, user_id, "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
@@ -1273,25 +1311,26 @@ class VKAdapter:
             await self.send_message(user_id, text, keyboard)
 
     def run(self):
-        logger.info("Запуск VK бота через Long Poll...")
+        """Основной метод запуска VK бота"""
+        logger.info("🔍 Инициализация VK Long Poll...")
         try:
             longpoll = VkBotLongPoll(self.vk_session, self.group_id)
-            logger.info("✓ Long Poll подключен успешно!")
-            logger.info(f"✓ VK бот готов! В кэше предзагружено {len(self.photo_cache)} фото")
-
+            logger.info("✅ Long Poll подключен успешно!")
+            logger.info(f"📊 В кэше предзагружено {len(self.photo_cache)} фото")
+            
+            # Основной цикл обработки событий
             for event in longpoll.listen():
-                logger.info(f"VK: Получено событие типа: {event.type}")
+                logger.debug(f"VK: Получено событие типа: {event.type}")
                 if event.type == VkBotEventType.MESSAGE_NEW and not event.from_chat:
                     self.handle_message(event)
                 elif event.type == VkBotEventType.MESSAGE_EVENT:
                     self.handle_callback(event)
                 else:
-                    logger.info(f"VK: Необработанный тип события: {event.type}")
-
+                    logger.debug(f"VK: Необработанный тип события: {event.type}")
+                    
         except Exception as e:
-            logger.error(f"Ошибка VK бота: {e}")
-            import traceback
-            logger.error(f"Детали: {traceback.format_exc()}")
+            logger.error(f"❌ Критическая ошибка VK бота: {e}")
+            raise  # Пробрасываем исключение для перезапуска
 
     def handle_message(self, event):
         try:
@@ -1390,7 +1429,13 @@ class VKAdapter:
         await self.send_message(user_id, text, keyboard)
 
 def main():
-    logger.info("Запуск мультиплатформенного бота...")
+    # Защита от дублирования запуска
+    create_pid_file()
+    setup_signal_handlers()
+    
+    logger.info(f"🚀 Запуск мультиплатформенного бота с PID: {CURRENT_PID}")
+    
+    # Проверяем, не запущены ли уже боты
     bot_core = FurnitureBotCore()
 
     telegram_adapter = TelegramAdapter(TELEGRAM_TOKEN, bot_core)
@@ -1399,46 +1444,80 @@ def main():
     bot_core.register_adapter(Platform.TELEGRAM, telegram_adapter)
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
+    # Флаг для отслеживания запущенных потоков
+    active_threads = []
+
     def run_vk():
         """Запуск VK бота с автоматическим перезапуском"""
+        thread_name = "VK_Bot"
+        logger.info(f"🧵 Запуск потока: {thread_name}")
+        
         while True:
             try:
-                logger.info("Запуск VK бота через Long Poll...")
-                vk_adapter.run()  # ← Только один вызов run()
+                logger.info("🔄 Запуск VK бота через Long Poll...")
+                vk_adapter.run()
             except Exception as e:
-                logger.error(f"VK бот упал с ошибкой: {e}")
-                logger.info("Перезапуск VK бота через 10 секунд...")
+                logger.error(f"❌ VK бот упал с ошибкой: {e}")
+                logger.info("⏳ Перезапуск VK бота через 10 секунд...")
                 time.sleep(10)
 
     def run_telegram():
         """Запуск Telegram бота с автоматическим перезапуском"""
+        thread_name = "Telegram_Bot" 
+        logger.info(f"🧵 Запуск потока: {thread_name}")
+        
         while True:
             try:
-                logger.info("Запуск Telegram бота...")
+                logger.info("🔄 Запуск Telegram бота...")
                 telegram_adapter.run()
             except Exception as e:
-                logger.error(f"Telegram бот упал с ошибкой: {e}")
-                logger.info("Перезапуск Telegram бота через 10 секунд...")
+                logger.error(f"❌ Telegram бот упал с ошибкой: {e}")
+                logger.info("⏳ Перезапуск Telegram бота через 10 секунд...")
                 time.sleep(10)
 
-    # Запускаем оба бота в отдельных потоках с автоматическим перезапуском
-    vk_thread = threading.Thread(target=run_vk, daemon=True)
-    telegram_thread = threading.Thread(target=run_telegram, daemon=True)
+    # Создаем и запускаем потоки
+    vk_thread = threading.Thread(
+        target=run_vk, 
+        daemon=True,
+        name="VK_Bot_Thread"
+    )
+    telegram_thread = threading.Thread(
+        target=run_telegram, 
+        daemon=True,
+        name="Telegram_Bot_Thread"
+    )
+    
+    active_threads.extend([vk_thread, telegram_thread])
     
     vk_thread.start()
     telegram_thread.start()
 
-    logger.info("✅ Оба бота запущены в режиме автоматического перезапуска!")
-    logger.info("📱 VK бот работает в отдельном потоке")
-    logger.info("📱 Telegram бот работает в отдельном потоке")
-    logger.info("🔄 Боты автоматически перезапустятся при любых ошибках")
+    logger.info("✅ Оба бота запущены в отдельных потоках!")
+    logger.info(f"📱 VK бот работает в потоке: {vk_thread.name}")
+    logger.info(f"📱 Telegram бот работает в потоке: {telegram_thread.name}")
+    logger.info("🔄 Боты автоматически перезапустятся при ошибках")
 
-    # Главный поток ждет завершения (которого никогда не будет)
+    # Мониторинг потоков
     try:
         while True:
-            time.sleep(1)
+            time.sleep(5)
+            # Проверяем, живы ли потоки
+            if not vk_thread.is_alive():
+                logger.warning("⚠️ Поток VK бота умер, перезапускаем...")
+                vk_thread = threading.Thread(target=run_vk, daemon=True, name="VK_Bot_Thread_Restarted")
+                vk_thread.start()
+                
+            if not telegram_thread.is_alive():
+                logger.warning("⚠️ Поток Telegram бота умер, перезапускаем...")
+                telegram_thread = threading.Thread(target=run_telegram, daemon=True, name="Telegram_Bot_Thread_Restarted")
+                telegram_thread.start()
+                
     except KeyboardInterrupt:
         logger.info("\n🛑 Получен сигнал прерывания. Остановка ботов...")
+    except Exception as e:
+        logger.error(f"❌ Ошибка в основном цикле: {e}")
+    finally:
+        logger.info("👋 Завершение работы бота")
 
 if __name__ == "__main__":
     main()
