@@ -1444,14 +1444,8 @@ def main():
     bot_core.register_adapter(Platform.TELEGRAM, telegram_adapter)
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
-    # Флаг для отслеживания запущенных потоков
-    active_threads = []
-
     def run_vk():
-        """Запуск VK бота с автоматическим перезапуском"""
-        thread_name = "VK_Bot"
-        logger.info(f"🧵 Запуск потока: {thread_name}")
-        
+        """Запуск VK бота с перезапуском при ошибках"""
         while True:
             try:
                 logger.info("🔄 Запуск VK бота через Long Poll...")
@@ -1462,62 +1456,28 @@ def main():
                 time.sleep(10)
 
     def run_telegram():
-        """Запуск Telegram бота с автоматическим перезапуском"""
-        thread_name = "Telegram_Bot" 
-        logger.info(f"🧵 Запуск потока: {thread_name}")
-        
+        """Запуск Telegram бота с перезапуском при ошибках"""
         while True:
             try:
                 logger.info("🔄 Запуск Telegram бота...")
-                telegram_adapter.run()
+                telegram_adapter.application.run_polling()
             except Exception as e:
                 logger.error(f"❌ Telegram бот упал с ошибкой: {e}")
                 logger.info("⏳ Перезапуск Telegram бота через 10 секунд...")
                 time.sleep(10)
 
-    # Создаем и запускаем потоки
+    # Запускаем VK в отдельном потоке
     vk_thread = threading.Thread(
         target=run_vk, 
         daemon=True,
         name="VK_Bot_Thread"
     )
-    telegram_thread = threading.Thread(
-        target=run_telegram, 
-        daemon=True,
-        name="Telegram_Bot_Thread"
-    )
-    
-    active_threads.extend([vk_thread, telegram_thread])
-    
     vk_thread.start()
-    telegram_thread.start()
-
-    logger.info("✅ Оба бота запущены в отдельных потоках!")
-    logger.info(f"📱 VK бот работает в потоке: {vk_thread.name}")
-    logger.info(f"📱 Telegram бот работает в потоке: {telegram_thread.name}")
-    logger.info("🔄 Боты автоматически перезапустятся при ошибках")
-
-    # Мониторинг потоков
-    try:
-        while True:
-            time.sleep(5)
-            # Проверяем, живы ли потоки
-            if not vk_thread.is_alive():
-                logger.warning("⚠️ Поток VK бота умер, перезапускаем...")
-                vk_thread = threading.Thread(target=run_vk, daemon=True, name="VK_Bot_Thread_Restarted")
-                vk_thread.start()
-                
-            if not telegram_thread.is_alive():
-                logger.warning("⚠️ Поток Telegram бота умер, перезапускаем...")
-                telegram_thread = threading.Thread(target=run_telegram, daemon=True, name="Telegram_Bot_Thread_Restarted")
-                telegram_thread.start()
-                
-    except KeyboardInterrupt:
-        logger.info("\n🛑 Получен сигнал прерывания. Остановка ботов...")
-    except Exception as e:
-        logger.error(f"❌ Ошибка в основном цикле: {e}")
-    finally:
-        logger.info("👋 Завершение работы бота")
+    logger.info("✅ VK бот запущен в отдельном потоке")
+    
+    # Telegram запускаем в основном потоке
+    logger.info("✅ Запуск Telegram бота в основном потоке...")
+    run_telegram()  # Этот вызов блокирующий
 
 if __name__ == "__main__":
     main()
