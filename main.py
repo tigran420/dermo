@@ -36,7 +36,7 @@ from telegram.ext import ( # type: ignore
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType  # type: ignore
 import requests  # type: ignore
 
-TELEGRAM_TOKEN = "8295931339:AAEP07XBDZ7FBIGSZg7SOZ8g7Sc_hsml8h0"
+TELEGRAM_TOKEN = "8036375043:AAH0C0xKBn7hkF4e1Tyu6JbAv3nC7nrImE8"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
 VK_TOKEN = "vk1.a.n4dL5gno1RVu0PQF9TzSbP6f-BKHcVlxZpvX6HIfX_tMW-w83pAHledqgAGDNrp-Ytuncm0TzZQYj_uiiX2S_up9eVvEzmhznIv8R5NP1momCUlVlCl8P4WthKeZM_sr86mVRimxeexXs0nCnAlO8C7IGRCtjvYbVUkLM9_DtDCb0qYWDSZImAO5qpr1ipbaXVjZV_FRsgKcGuO_UYJYDA"
 VK_GROUP_ID = "228885547"
