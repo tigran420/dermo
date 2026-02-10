@@ -38,8 +38,8 @@ import requests  # type: ignore
 
 TELEGRAM_TOKEN = "8036375043:AAH0C0xKBn7hkF4e1Tyu6JbAv3nC7nrImE8"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
-VK_TOKEN = "vk1.a.n4dL5gno1RVu0PQF9TzSbP6f-BKHcVlxZpvX6HIfX_tMW-w83pAHledqgAGDNrp-Ytuncm0TzZQYj_uiiX2S_up9eVvEzmhznIv8R5NP1momCUlVlCl8P4WthKeZM_sr86mVRimxeexXs0nCnAlO8C7IGRCtjvYbVUkLM9_DtDCb0qYWDSZImAO5qpr1ipbaXVjZV_FRsgKcGuO_UYJYDA"
-VK_GROUP_ID = "228885547"
+VK_TOKEN = "vk1.a.GfLoDpCDJMSDMvl52AKqfAGfBYY3yuUbiXjdr9jxkos8INjYEvuA6vV9i3K6IcQeNvVutmJzCyHpc6gyPVr6QV6mvf7aiLq0nJFE316v2eeBqBaBbj6BDjF3rNgTAGLELM9RF5l-IYDmsL-iUaGXGrN9WL5GL9sXV3y8IbXQeyg9ezPWWIXeaSzuNHDIvj00KlU_0qJo-TzqU5HjsagbxQ"
+VK_GROUP_ID = "235576791"
 
 # URL изображений
 WELCOME_PHOTOS = [
@@ -147,7 +147,6 @@ WELCOME_MESSAGE = (
     "Широкий выбор материалов более 1000 расцветок, от ЛДСП до Эмали и фурнитуры (Blum, Hettich, Boyard и др.).\n"
     "Бесплатный замер, доставка и установка по городу.\n\n"
 
-    "При установки НЕ БЕРЁМ платы за вырезы: под варочную поверхность, под сан узлы, под плинтуса, под мойку как это делают другие мебельные компании.\n"
     "Гарантия 24 месяца на всю продукцию!\n"
     "Цены приятно удивят!\n"
     "Рассрочка!!!"
