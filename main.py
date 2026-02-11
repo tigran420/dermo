@@ -38,8 +38,8 @@ import requests  # type: ignore
 
 TELEGRAM_TOKEN = "8036375043:AAEpcpOfpQans5BaMpLMtrb0oPBYUtd6JaE"
 TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
-VK_TOKEN = "vk1.a.0uaTye8kOpWWA51LAiPq_AUUaWqDaBnVZ2RLhFCLxZ96pT4sdkmg7XnJTUl2H4JTY7rqrHYl9exHZbvhEP3o0RMJUDg2kCFnBOrMz1g3Hj0uO8KfvdS2etM3IWwiTdKwEht9n6TWvZRnlpwZAKInLz_b9nrAouBEPZwdBvFke4JpLKtvdM5wtjm8pBcs7LsAWiVcA_YKsucjyvxaSP2fkA"
-VK_GROUP_ID = "235905851"
+VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
+VK_GROUP_ID = "233089872"
 
 
 # URL изображений
