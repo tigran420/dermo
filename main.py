@@ -59,8 +59,7 @@ MATERIAL_PHOTOS = {
 }
 
 # Глобальные переменные для защиты от дублирования
-CURRENT_PID = os.getpid()
-PID_FILE = "bot.pid"
+
 
 def setup_signal_handlers():
     """Установка обработчиков сигналов для корректного завершения"""
@@ -71,17 +70,6 @@ def setup_signal_handlers():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-def create_pid_file():
-    """Создание PID файла для предотвращения дублирования"""
-    if os.path.exists(PID_FILE):
-        with open(PID_FILE, 'r') as f:
-            old_pid = f.read().strip()
-            if old_pid and os.path.exists(f"/proc/{old_pid}"):
-                logger.error(f"⚠️ Бот уже запущен с PID {old_pid}. Завершаем текущий процесс.")
-                sys.exit(1)
-    
-    with open(PID_FILE, 'w') as f:
-        f.write(str(CURRENT_PID))
     
     atexit.register(cleanup_pid_file)
     logger.info(f"✅ Создан PID файл с ID: {CURRENT_PID}")
