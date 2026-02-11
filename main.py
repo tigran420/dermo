@@ -7,25 +7,6 @@ import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
 
-def kill_background_instances():
-    """
-    Завершает все процессы main.py, кроме текущего.
-    Работает как для обычного python, так и для venv.
-    """
-    current_pid = os.getpid()
-    try:
-        output = subprocess.check_output(["ps", "aux"], text=True)
-        for line in output.splitlines():
-            if "python" in line and "main.py" in line:
-                pid = int(line.split()[1])
-                if pid != current_pid:
-                    os.kill(pid, signal.SIGKILL)
-                    print(f"[INIT] Убит фоновый процесс бота PID={pid}")
-    except Exception as e:
-        print(f"[INIT] Ошибка при очистке фоновых процессов: {e}")
-
-# Вызов при старте
-kill_background_instances()
 
 # VK imports
 import vk_api  # type: ignore
