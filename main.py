@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 import logging
@@ -5,16 +6,12 @@ import threading
 import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
-import os
-import sys
-import atexit
-import signal
 
 # VK imports
 import vk_api  # type: ignore
 
 # Telegram imports
-from telegram import ( # type: ignore
+from telegram import (  # type: ignore
     Bot,
     Update,
     InlineKeyboardButton,
@@ -23,8 +20,8 @@ from telegram import ( # type: ignore
     KeyboardButton,
     InputMediaPhoto,
 )
-from telegram.error import TelegramError # type: ignore
-from telegram.ext import ( # type: ignore
+from telegram.error import TelegramError  # type: ignore
+from telegram.ext import (  # type: ignore
     ApplicationBuilder,
     ContextTypes,
     CommandHandler,
@@ -36,8 +33,10 @@ from telegram.ext import ( # type: ignore
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType  # type: ignore
 import requests  # type: ignore
 
-
-
+TELEGRAM_TOKEN = "8036375043:AAEpcpOfpQans5BaMpLMtrb0oPBYUtd6JaE"
+TELEGRAM_CHAT_ID = "-1003166604153"  # Замените на корректный ID вашей группы/канала Telegram. Для групп ID обычно начинается с -100.
+VK_TOKEN = "vk1.a.Do3IzROgiVPPGSjBVw3nFEg2eIAsy7673mBTpwakOxj_qNTtCxEXx8Pa9NS_q7FbDZqVlfecQgofYCYotRguILuXWAYu7DL2gkQocsu7zcRvk3M9R_0jCzzjErAJRLcy_Zx4jEZR87zCFUJvKIvkU_hLmJbfozuPkamZbBaElI1yZ8U3RpRNqMdjkdwm5SdFFS1HqCp7xxLu0EnF4JyVqA"
+VK_GROUP_ID = "233089872"
 
 # URL изображений
 WELCOME_PHOTOS = [
@@ -55,27 +54,6 @@ MATERIAL_PHOTOS = {
     "Материалы": "https://raw.githubusercontent.com/Egorinho77/eban-/refs/heads/main/photo_2025-10-11_00-34-48.jpg",
 }
 
-# Глобальные переменные для защиты от дублирования
-
-
-def setup_signal_handlers():
-    """Установка обработчиков сигналов для корректного завершения"""
-    def signal_handler(signum, frame):
-        logger.info(f"Получен сигнал {signum}. Завершение работы...")
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    
-    atexit.register(cleanup_pid_file)
-    logger.info(f"✅ Создан PID файл с ID: {CURRENT_PID}")
-
-def cleanup_pid_file():
-    """Очистка PID файла при завершении"""
-    if os.path.exists(PID_FILE):
-        os.remove(PID_FILE)
-        logger.info("🧹 PID файл удален")
 
 def send_telegram_application(application_data):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -111,15 +89,18 @@ def send_telegram_application(application_data):
     except requests.exceptions.RequestException as e:
         logging.error(f"❌ Ошибка отправки заявки в Telegram-группу: {e}")
 
+
 from vk_api.utils import get_random_id  # type: ignore
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 class Platform(Enum):
     TELEGRAM = "telegram"
     VK = "vk"
+
 
 # Приветственное сообщение
 WELCOME_MESSAGE = (
@@ -141,6 +122,7 @@ WELCOME_MESSAGE = (
 # Хранилище данных пользователя
 user_data: Dict[int, Dict[str, Any]] = {}
 
+
 class KeyboardManager:
     @staticmethod
     def get_initial_keyboard(platform: Platform):
@@ -160,19 +142,26 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "🍳 Кухня", "payload": "{\"command\": \"кухня\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🚪 Шкаф", "payload": "{\"command\": \"шкаф\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🍳 Кухня", "payload": "{\"command\": \"кухня\"}"},
+                         "color": "primary"},
+                        {"action": {"type": "callback", "label": "🚪 Шкаф", "payload": "{\"command\": \"шкаф\"}"},
+                         "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "👔 Гардеробная", "payload": "{\"command\": \"гардеробная\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🛋 Прихожая", "payload": "{\"command\": \"прихожая\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "👔 Гардеробная",
+                                    "payload": "{\"command\": \"гардеробная\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🛋 Прихожая",
+                                    "payload": "{\"command\": \"прихожая\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🛁 Мебель для ванной", "payload": "{\"command\": \"ванная\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🛋 Другая мебель", "payload": "{\"command\": \"другое\"}"}, "color": "secondary"},
+                        {"action": {"type": "callback", "label": "🛁 Мебель для ванной",
+                                    "payload": "{\"command\": \"ванная\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🛋 Другая мебель",
+                                    "payload": "{\"command\": \"другое\"}"}, "color": "secondary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "📞 Свяжитесь со мной", "payload": "{\"command\": \"связаться_со_мной\"}"}, "color": "positive"}
+                        {"action": {"type": "callback", "label": "📞 Свяжитесь со мной",
+                                    "payload": "{\"command\": \"связаться_со_мной\"}"}, "color": "positive"}
                     ],
                 ],
             }
@@ -187,11 +176,14 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "📏 Замеры", "payload": "{\"command\": \"услуга_замеры\"}"}, "color": "positive"},
-                        {"action": {"type": "callback", "label": "💰 Рассчитать стоимость", "payload": "{\"command\": \"услуга_стоимость\"}"}, "color": "primary"}
+                        {"action": {"type": "callback", "label": "📏 Замеры",
+                                    "payload": "{\"command\": \"услуга_замеры\"}"}, "color": "positive"},
+                        {"action": {"type": "callback", "label": "💰 Рассчитать стоимость",
+                                    "payload": "{\"command\": \"услуга_стоимость\"}"}, "color": "primary"}
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_сроки\"}"}, "color": "negative"}
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_сроки\"}"}, "color": "negative"}
                     ]
                 ],
             }
@@ -207,11 +199,14 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "📞 По телефону", "payload": "{\"command\": \"по_телефону\"}"}, "color": "positive"},
-                        {"action": {"type": "callback", "label": "💬 Сообщение в Telegram", "payload": "{\"command\": \"сообщение_тг\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📞 По телефону",
+                                    "payload": "{\"command\": \"по_телефону\"}"}, "color": "positive"},
+                        {"action": {"type": "callback", "label": "💬 Сообщение в Telegram",
+                                    "payload": "{\"command\": \"сообщение_тг\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔄 Начать заново", "payload": "{\"command\": \"начать_заново\"}"}, "color": "secondary"},
+                        {"action": {"type": "callback", "label": "🔄 Начать заново",
+                                    "payload": "{\"command\": \"начать_заново\"}"}, "color": "secondary"},
                     ],
                 ],
             }
@@ -241,15 +236,20 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "📐 Угловая", "payload": "{\"command\": \"кухня_угловая\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "📏 Прямая", "payload": "{\"command\": \"кухня_прямая\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📐 Угловая",
+                                    "payload": "{\"command\": \"кухня_угловая\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📏 Прямая",
+                                    "payload": "{\"command\": \"кухня_прямая\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔄 П-образная", "payload": "{\"command\": \"кухня_п_образная\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🏝 С островом", "payload": "{\"command\": \"кухня_остров\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔄 П-образная",
+                                    "payload": "{\"command\": \"кухня_п_образная\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🏝 С островом",
+                                    "payload": "{\"command\": \"кухня_остров\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -269,11 +269,14 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "🚪 Распашной", "payload": "{\"command\": \"шкаф_распашной\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🚶 Купе", "payload": "{\"command\": \"шкаф_купе\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🚪 Распашной",
+                                    "payload": "{\"command\": \"шкаф_распашной\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🚶 Купе", "payload": "{\"command\": \"шкаф_купе\"}"},
+                         "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -293,11 +296,14 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "📏 Прямая", "payload": "{\"command\": \"прихожая_прямая\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "📐 Угловая", "payload": "{\"command\": \"прихожая_угловая\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📏 Прямая",
+                                    "payload": "{\"command\": \"прихожая_прямая\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📐 Угловая",
+                                    "payload": "{\"command\": \"прихожая_угловая\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -318,12 +324,16 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "🚰 Тумба под раковину", "payload": "{\"command\": \"ванная_тумба\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🧺 Шкаф-пенал", "payload": "{\"command\": \"ванная_пенал\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🚰 Тумба под раковину",
+                                    "payload": "{\"command\": \"ванная_тумба\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🧺 Шкаф-пенал",
+                                    "payload": "{\"command\": \"ванная_пенал\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "💡 Зеркало с подсветкой", "payload": "{\"command\": \"ванная_зеркало\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "💡 Зеркало с подсветкой",
+                                    "payload": "{\"command\": \"ванная_зеркало\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_категории\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -344,12 +354,16 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "📏 Точные размеры", "payload": "{\"command\": \"размер_точные\"}"}, "color": "positive"},
-                        {"action": {"type": "callback", "label": "📐 Приблизительные", "payload": "{\"command\": \"размер_приблизительные\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📏 Точные размеры",
+                                    "payload": "{\"command\": \"размер_точные\"}"}, "color": "positive"},
+                        {"action": {"type": "callback", "label": "📐 Приблизительные",
+                                    "payload": "{\"command\": \"размер_приблизительные\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "❓ Не знаю", "payload": "{\"command\": \"размер_не_знаю\"}"}, "color": "secondary"},
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "❓ Не знаю",
+                                    "payload": "{\"command\": \"размер_не_знаю\"}"}, "color": "secondary"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -375,23 +389,32 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "1,5 - 2 м", "payload": "{\"command\": \"размер_1.5_2\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "2 - 2,5 м", "payload": "{\"command\": \"размер_2_2.5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "1,5 - 2 м",
+                                    "payload": "{\"command\": \"размер_1.5_2\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "2 - 2,5 м",
+                                    "payload": "{\"command\": \"размер_2_2.5\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "2,5 - 3 м", "payload": "{\"command\": \"размер_2.5_3\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "3 - 3,5 м", "payload": "{\"command\": \"размер_3_3.5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "2,5 - 3 м",
+                                    "payload": "{\"command\": \"размер_2.5_3\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "3 - 3,5 м",
+                                    "payload": "{\"command\": \"размер_3_3.5\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "3,5 - 4 м", "payload": "{\"command\": \"размер_3.5_4\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "4 - 4,5 м", "payload": "{\"command\": \"размер_4_4.5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "3,5 - 4 м",
+                                    "payload": "{\"command\": \"размер_3.5_4\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "4 - 4,5 м",
+                                    "payload": "{\"command\": \"размер_4_4.5\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "4,5 - 5 м", "payload": "{\"command\": \"размер_4.5_5\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "Более 5 м", "payload": "{\"command\": \"размер_более_5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "4,5 - 5 м",
+                                    "payload": "{\"command\": \"размер_4.5_5\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "Более 5 м",
+                                    "payload": "{\"command\": \"размер_более_5\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -414,16 +437,22 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "🌳 ЛДСП", "payload": "{\"command\": \"материал_лдсп\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "✨ АГТ", "payload": "{\"command\": \"материал_агт\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🌳 ЛДСП",
+                                    "payload": "{\"command\": \"материал_лдсп\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "✨ АГТ", "payload": "{\"command\": \"материал_агт\"}"},
+                         "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🎨 Эмаль", "payload": "{\"command\": \"материал_эмаль\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🔲 Пластик", "payload": "{\"command\": \"материал_пластик\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🎨 Эмаль",
+                                    "payload": "{\"command\": \"материал_эмаль\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔲 Пластик",
+                                    "payload": "{\"command\": \"материал_пластик\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "💎 Акрил", "payload": "{\"command\": \"материал_акрил\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_размер\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "💎 Акрил",
+                                    "payload": "{\"command\": \"материал_акрил\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_размер\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -444,12 +473,16 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "💰 Эконом", "payload": "{\"command\": \"фурнитура_эконом\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "💎 Стандарт", "payload": "{\"command\": \"фурнитура_стандарт\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "💰 Эконом",
+                                    "payload": "{\"command\": \"фурнитура_эконом\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "💎 Стандарт",
+                                    "payload": "{\"command\": \"фурнитура_стандарт\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "👑 Премиум", "payload": "{\"command\": \"фурнитура_премиум\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": "{\"command\": \"назад_материал\"}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "👑 Премиум",
+                                    "payload": "{\"command\": \"фурнитура_премиум\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": "{\"command\": \"назад_материал\"}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -470,12 +503,16 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "💰 Эконом", "payload": "{\"command\": \"бюджет_эконом\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "💎 Стандарт", "payload": "{\"command\": \"бюджет_стандарт\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "💰 Эконом",
+                                    "payload": "{\"command\": \"бюджет_эконом\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "💎 Стандарт",
+                                    "payload": "{\"command\": \"бюджет_стандарт\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "👑 Премиум", "payload": "{\"command\": \"бюджет_премиум\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "👑 Премиум",
+                                    "payload": "{\"command\": \"бюджет_премиум\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
                     ],
                 ],
             }
@@ -497,19 +534,25 @@ class KeyboardManager:
                 "inline": True,
                 "buttons": [
                     [
-                        {"action": {"type": "callback", "label": "🗓 Этот месяц", "payload": "{\"command\": \"срок_месяц\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "⏳ 1-2 месяца", "payload": "{\"command\": \"срок_1_2\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "🗓 Этот месяц",
+                                    "payload": "{\"command\": \"срок_месяц\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "⏳ 1-2 месяца",
+                                    "payload": "{\"command\": \"срок_1_2\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "📅 3 месяца", "payload": "{\"command\": \"срок_3\"}"}, "color": "primary"},
-                        {"action": {"type": "callback", "label": "👀 Присматриваюсь", "payload": "{\"command\": \"срок_присмотр\"}"}, "color": "primary"},
+                        {"action": {"type": "callback", "label": "📅 3 месяца", "payload": "{\"command\": \"срок_3\"}"},
+                         "color": "primary"},
+                        {"action": {"type": "callback", "label": "👀 Присматриваюсь",
+                                    "payload": "{\"command\": \"срок_присмотр\"}"}, "color": "primary"},
                     ],
                     [
-                        {"action": {"type": "callback", "label": "🔙 Назад", "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
+                        {"action": {"type": "callback", "label": "🔙 Назад",
+                                    "payload": f"{{\"command\": \"{back_callback}\"}}"}, "color": "negative"},
                     ],
                 ],
             }
             return json.dumps(keyboard, ensure_ascii=False)
+
 
 class FurnitureBotCore:
     def __init__(self):
@@ -544,9 +587,9 @@ class FurnitureBotCore:
     async def request_service_type(self, platform: Platform, user_id: int, message_id: int = None):
         if platform != Platform.VK:
             return
-            
+
         text = "📋 **Выберите услугу:**\n\n• 📏 Замеры - наш специалист приедет для точных замеров\n• 💰 Рассчитать стоимость - предварительный расчет стоимости мебели"
-        
+
         if message_id:
             await self.edit_message(platform, user_id, message_id, text, KeyboardManager.get_service_keyboard(platform))
         else:
@@ -596,7 +639,7 @@ class FurnitureBotCore:
                 user_data_local["service_type"] = "Рассчитать стоимость"
                 user_data_local["note"] = "❗️СМОТРИ VK - нужна стоимость"
                 send_telegram_application(user_data_local)
-                
+
                 cost_message = (
                     "💰 **Расчет стоимости**\n\n"
                     "Спасибо за интерес к нашим услугам! "
@@ -606,10 +649,10 @@ class FurnitureBotCore:
                     "подробную информацию о стоимости выбранной мебели."
                 )
                 await self.send_or_edit_message(platform, user_id, message_id, cost_message)
-                
+
                 await asyncio.sleep(2)
                 await self.send_message(
-                    platform, user_id, 
+                    platform, user_id,
                     "Хотите оформить ещё одну заявку на замеры или выбрать другую мебель?",
                     KeyboardManager.get_initial_keyboard(platform)
                 )
@@ -628,7 +671,7 @@ class FurnitureBotCore:
         # Обработка выбора категории
         if data in ["кухня", "шкаф", "гардеробная", "прихожая", "ванная", "другое"]:
             user_data_local["category"] = data
-            
+
             if data == "кухня":
                 user_data_local["current_step"] = "kitchen_type"
                 await self.send_or_edit_message(
@@ -725,7 +768,7 @@ class FurnitureBotCore:
                 user_data_local["size"] = "Точные"
                 user_data_local["waiting_for"] = "exact_size"
                 await self.send_or_edit_message(
-                    platform, user_id, message_id, 
+                    platform, user_id, message_id,
                     "📏 **Точные размеры**\n\nПожалуйста, напишите точные размеры (например: 2.5м х 1.8м):"
                 )
                 return
@@ -739,11 +782,11 @@ class FurnitureBotCore:
                 return
             elif data == "размер_не_знаю":
                 user_data_local["size"] = "Не знаю"
-            elif data in ["размер_1.5_2", "размер_2_2.5", "размер_2.5_3", "размер_3_3.5", 
+            elif data in ["размер_1.5_2", "размер_2_2.5", "размер_2.5_3", "размер_3_3.5",
                           "размер_3.5_4", "размер_4_4.5", "размер_4.5_5", "размер_более_5"]:
                 size_map = {
                     "размер_1.5_2": "1,5 - 2 м",
-                    "размер_2_2.5": "2 - 2,5 м", 
+                    "размер_2_2.5": "2 - 2,5 м",
                     "размер_2.5_3": "2,5 - 3 м",
                     "размер_3_3.5": "3 - 3,5 м",
                     "размер_3.5_4": "3,5 - 4 м",
@@ -781,7 +824,7 @@ class FurnitureBotCore:
             photo_url = MATERIAL_PHOTOS.get(material_key)
             if photo_url:
                 await self.send_photo_album(platform, user_id, [photo_url],
-                                            f"Подробнее о материалаы: {user_data_local['material']}")
+                                            f"Подробнее о материалах: {user_data_local['material']}")
 
             user_data_local["current_step"] = "hardware"
             await self.send_message(platform, user_id, "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
@@ -823,7 +866,7 @@ class FurnitureBotCore:
                 user_data_local["deadline"] = "3 месяца"
             elif data == "срок_присмотр":
                 user_data_local["deadline"] = "Присматриваюсь"
-            
+
             if platform == Platform.VK:
                 await self.request_service_type(platform, user_id, message_id)
             else:
@@ -901,10 +944,12 @@ class FurnitureBotCore:
                 await self.send_or_edit_message(platform, user_id, message_id, "🚪 **Шкаф**\n\nВыберите тип шкафа:",
                                                 KeyboardManager.get_cabinet_type_keyboard(platform))
             elif category == "прихожая":
-                await self.send_or_edit_message(platform, user_id, message_id, "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛋 **Прихожая**\n\nВыберите тип прихожей:",
                                                 KeyboardManager.get_hallway_type_keyboard(platform))
             elif category == "ванная":
-                await self.send_or_edit_message(platform, user_id, message_id, "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
                                                 KeyboardManager.get_bathroom_type_keyboard(platform))
         elif back_step == "размер":
             category = user_data_local.get("category", "")
@@ -914,15 +959,19 @@ class FurnitureBotCore:
                                                 KeyboardManager.get_kitchen_type_keyboard(platform))
             elif category == "гардеробная":
                 user_data_local["current_step"] = "size"
-                await self.send_or_edit_message(platform, user_id, message_id, "👔 **Гардеробная**\n\nКакие у вас размеры?",
-                                                KeyboardManager.get_size_keyboard(platform, back_callback="назад_категории"))
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "👔 **Гардеробная**\n\nКакие у вас размеры?",
+                                                KeyboardManager.get_size_keyboard(platform,
+                                                                                  back_callback="назад_категории"))
             elif category == "прихожая":
                 user_data_local["current_step"] = "hallway_type"
-                await self.send_or_edit_message(platform, user_id, message_id, "🛋 **Прихожая**\n\nВыберите тип прихожей:",
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛋 **Прихожая**\n\nВыберите тип прихожей:",
                                                 KeyboardManager.get_hallway_type_keyboard(platform))
             elif category == "ванная":
                 user_data_local["current_step"] = "bathroom_type"
-                await self.send_or_edit_message(platform, user_id, message_id, "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛁 **Мебель для ванной**\n\nВыберите тип мебели для ванной:",
                                                 KeyboardManager.get_bathroom_type_keyboard(platform))
             elif category == "шкаф":
                 user_data_local["current_step"] = "cabinet_type"
@@ -930,17 +979,20 @@ class FurnitureBotCore:
                                                 KeyboardManager.get_cabinet_type_keyboard(platform))
             elif category == "другое":
                 user_data_local["current_step"] = "other_furniture_text"
-                await self.send_or_edit_message(platform, user_id, message_id, "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:")
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🛋 **Другая мебель**\n\nПожалуйста, опишите, какая мебель вас интересует:")
                 user_data_local["waiting_for"] = "other_furniture_description"
         elif back_step == "материал":
             await self.send_material_options(platform, user_id, message_id)
         elif back_step == "фурнитура":
-            await self.send_or_edit_message(platform, user_id, message_id, "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
+            await self.send_or_edit_message(platform, user_id, message_id,
+                                            "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
                                             KeyboardManager.get_hardware_keyboard(platform))
         elif back_step == "бюджет":
             category = user_data_local.get("category", "")
             if category == "кухня":
-                await self.send_or_edit_message(platform, user_id, message_id, "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
+                await self.send_or_edit_message(platform, user_id, message_id,
+                                                "🔧 **Фурнитура**\n\nВыберите класс фурнитуры:",
                                                 KeyboardManager.get_hardware_keyboard(platform))
             elif category in ["шкаф", "гардеробная", "прихожая", "ванная", "другое"]:
                 user_data_local["current_step"] = "size"
@@ -949,7 +1001,8 @@ class FurnitureBotCore:
         elif back_step == "сроки":
             user_data_local["current_step"] = "deadline"
             await self.send_or_edit_message(platform, user_id, message_id, "📅 **Сроки заказа**\n\nВыберите сроки:",
-                                            KeyboardManager.get_deadline_keyboard(platform, back_callback="назад_бюджет"))
+                                            KeyboardManager.get_deadline_keyboard(platform,
+                                                                                  back_callback="назад_бюджет"))
         elif back_step == "другое":
             await self.send_or_edit_message(platform, user_id, message_id, WELCOME_MESSAGE,
                                             KeyboardManager.get_initial_keyboard(platform))
@@ -968,7 +1021,7 @@ class FurnitureBotCore:
         if user_data_local.get("waiting_for") == "exact_size":
             user_data_local["exact_size"] = text
             user_data_local["waiting_for"] = None
-            
+
             category = user_data_local.get("category", "")
             if category == "кухня":
                 user_data_local["current_step"] = "material"
@@ -1090,6 +1143,11 @@ class FurnitureBotCore:
         send_telegram_application(user_data_local)
         self.clear_user_data(user_id)
 
+
+# Остальной код остается без изменений (TelegramAdapter, VKAdapter, main функция)
+# [TelegramAdapter и VKAdapter классы остаются такими же как в предыдущем коде]
+# [main функция также остается без изменений]
+
 # Адаптер для Telegram
 class TelegramAdapter:
     def __init__(self, token: str, bot_core: FurnitureBotCore):
@@ -1183,6 +1241,7 @@ class TelegramAdapter:
     def run(self):
         logger.info("Запуск Telegram бота...")
         self.application.run_polling()
+
 
 # Адаптер для VK
 class VKAdapter:
@@ -1296,26 +1355,54 @@ class VKAdapter:
             await self.send_message(user_id, text, keyboard)
 
     def run(self):
-        """Основной метод запуска VK бота"""
-        logger.info("🔍 Инициализация VK Long Poll...")
+        logger.info("Запуск VK бота через Long Poll...")
         try:
             longpoll = VkBotLongPoll(self.vk_session, self.group_id)
-            logger.info("✅ Long Poll подключен успешно!")
-            logger.info(f"📊 В кэше предзагружено {len(self.photo_cache)} фото")
-            
-            # Основной цикл обработки событий
+            logger.info("✓ Long Poll подключен успешно!")
+            logger.info(f"✓ VK бот готов! В кэше предзагружено {len(self.photo_cache)} фото")
+
             for event in longpoll.listen():
-                logger.debug(f"VK: Получено событие типа: {event.type}")
+                logger.info(f"VK: Получено событие типа: {event.type}")
                 if event.type == VkBotEventType.MESSAGE_NEW and not event.from_chat:
                     self.handle_message(event)
                 elif event.type == VkBotEventType.MESSAGE_EVENT:
                     self.handle_callback(event)
                 else:
-                    logger.debug(f"VK: Необработанный тип события: {event.type}")
-                    
+                    logger.info(f"VK: Необработанный тип события: {event.type}")
+
         except Exception as e:
-            logger.error(f"❌ Критическая ошибка VK бота: {e}")
-            raise  # Пробрасываем исключение для перезапуска
+            logger.error(f"Ошибка VK бота: {e}")
+            import traceback
+            logger.error(f"Детали: {traceback.format_exc()}")
+
+    def run_with_restart(self):
+        """Запускает VK бота с автоматическим перезапуском при ошибках и защитой от дубликатов"""
+        import threading
+
+        if hasattr(self, "_is_running") and self._is_running:
+            logger.warning("⚠️ VK бот уже запущен — второй экземпляр не стартует.")
+            return
+
+        self._is_running = True
+        logger.info("✅ VK бот запускается с автоматическим перезапуском...")
+
+        while True:
+            try:
+                self.run()
+            except Exception as e:
+                msg = str(e)
+                if "Rate limit" in msg:
+                    logger.error(f"⚠️ VK API лимит! Ждём 60 секунд перед повтором...")
+                    time.sleep(60)
+                else:
+                    logger.error(f"❌ VK бот упал с ошибкой: {msg}")
+                    logger.info("Перезапуск VK бота через 10 секунд...")
+                    time.sleep(10)
+            finally:
+                # если поток был принудительно остановлен
+                if threading.main_thread().is_alive() is False:
+                    logger.info("🧹 Основной поток завершён, VK бот останавливается.")
+                    break
 
     def handle_message(self, event):
         try:
@@ -1397,7 +1484,8 @@ class VKAdapter:
                         keyboard_obj = json.loads(keyboard)
                     else:
                         keyboard_obj = keyboard
-                    logger.info(f"VK: Кнопки: {[btn['action']['label'] for row in keyboard_obj['buttons'] for btn in row]}")
+                    logger.info(
+                        f"VK: Кнопки: {[btn['action']['label'] for row in keyboard_obj['buttons'] for btn in row]}")
                 except Exception as e:
                     logger.error(f"VK: Ошибка логирования клавиатуры: {e}")
 
@@ -1413,14 +1501,9 @@ class VKAdapter:
     async def edit_message(self, user_id: int, message_id: int, text: str, keyboard=None):
         await self.send_message(user_id, text, keyboard)
 
+
 def main():
-    # Защита от дублирования запуска
-    create_pid_file()
-    setup_signal_handlers()
-    
-    logger.info(f"🚀 Запуск мультиплатформенного бота с PID: {CURRENT_PID}")
-    
-    # Проверяем, не запущены ли уже боты
+    logger.info("Запуск мультиплатформенного бота...")
     bot_core = FurnitureBotCore()
 
     telegram_adapter = TelegramAdapter(TELEGRAM_TOKEN, bot_core)
@@ -1430,39 +1513,46 @@ def main():
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
     def run_vk():
-        """Запуск VK бота с перезапуском при ошибках"""
+        """Запуск VK бота с автоматическим перезапуском"""
         while True:
             try:
-                logger.info("🔄 Запуск VK бота через Long Poll...")
+                logger.info("Запуск VK бота через Long Poll...")
                 vk_adapter.run()
             except Exception as e:
-                logger.error(f"❌ VK бот упал с ошибкой: {e}")
-                logger.info("⏳ Перезапуск VK бота через 10 секунд...")
+                logger.error(f"VK бот упал с ошибкой: {e}")
+                logger.info("Перезапуск VK бота через 10 секунд...")
                 time.sleep(10)
 
     def run_telegram():
-        """Запуск Telegram бота с перезапуском при ошибках"""
+        """Запуск Telegram бота с автоматическим перезапуском"""
         while True:
             try:
-                logger.info("🔄 Запуск Telegram бота...")
-                telegram_adapter.application.run_polling()
+                logger.info("Запуск Telegram бота...")
+                telegram_adapter.run()
             except Exception as e:
-                logger.error(f"❌ Telegram бот упал с ошибкой: {e}")
-                logger.info("⏳ Перезапуск Telegram бота через 10 секунд...")
+                logger.error(f"Telegram бот упал с ошибкой: {e}")
+                logger.info("Перезапуск Telegram бота через 10 секунд...")
                 time.sleep(10)
 
-    # Запускаем VK в отдельном потоке
-    vk_thread = threading.Thread(
-        target=run_vk, 
-        daemon=True,
-        name="VK_Bot_Thread"
-    )
+    # Запускаем оба бота в отдельных потоках с автоматическим перезапуском
+    vk_thread = threading.Thread(target=run_vk, daemon=True)
+    telegram_thread = threading.Thread(target=run_telegram, daemon=True)
+
     vk_thread.start()
-    logger.info("✅ VK бот запущен в отдельном потоке")
-    
-    # Telegram запускаем в основном потоке
-    logger.info("✅ Запуск Telegram бота в основном потоке...")
-    run_telegram()  # Этот вызов блокирующий
+    telegram_thread.start()
+
+    logger.info("✅ Оба бота запущены в режиме автоматического перезапуска!")
+    logger.info("📱 VK бот работает в отдельном потоке")
+    logger.info("📱 Telegram бот работает в отдельном потоке")
+    logger.info("🔄 Боты автоматически перезапустятся при любых ошибках")
+
+    # Главный поток ждет завершения (которого никогда не будет)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("\n🛑 Получен сигнал прерывания. Остановка ботов...")
+
 
 if __name__ == "__main__":
     main()
