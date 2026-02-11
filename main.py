@@ -7,6 +7,22 @@ import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
 
+def kill_venv_instances():
+    current_pid = os.getpid()
+    try:
+        output = subprocess.check_output(["ps", "aux"], text=True)
+        for line in output.splitlines():
+            # Ищем процессы main.py, которые используют venv
+            if "python" in line and "main.py" in line and "venv/bin/python" in line:
+                pid = int(line.split()[1])
+                if pid != current_pid:
+                    os.kill(pid, signal.SIGKILL)
+                    print(f"[INIT] Убит процесс бота в venv PID={pid}")
+    except Exception as e:
+        print(f"[INIT] Ошибка при очистке процессов venv: {e}")
+
+# Вызов функции при старте
+kill_venv_instances()
 
 # VK imports
 import vk_api  # type: ignore
