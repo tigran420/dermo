@@ -7,6 +7,23 @@ import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
 
+# ================== УБИЙСТВО ДРУГИХ КОПИЙ БОТА ==================
+def kill_other_instances():
+    current_pid = os.getpid()
+    try:
+        output = subprocess.check_output(["ps", "aux"], text=True)
+        for line in output.splitlines():
+            if "python" in line and "main.py" in line:
+                pid = int(line.split()[1])
+                if pid != current_pid:
+                    os.kill(pid, signal.SIGKILL)
+                    print(f"[INIT] Убит другой процесс бота PID={pid}")
+    except Exception as e:
+        print(f"[INIT] Ошибка при очистке процессов: {e}")
+
+kill_other_instances()
+# ===============================================================
+
 # VK imports
 import vk_api  # type: ignore
 
