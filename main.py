@@ -7,7 +7,6 @@ import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
 
-
 # VK imports
 import vk_api  # type: ignore
 
@@ -1514,26 +1513,12 @@ def main():
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
     def run_vk():
-        """Запуск VK бота с автоматическим перезапуском"""
-        while True:
-            try:
-                logger.info("Запуск VK бота через Long Poll...")
-                vk_adapter.run()
-            except Exception as e:
-                logger.error(f"VK бот упал с ошибкой: {e}")
-                logger.info("Перезапуск VK бота через 10 секунд...")
-                time.sleep(10)
+        logger.info("Запуск VK бота (без автоперезапуска)")
+        vk_adapter.run()
 
     def run_telegram():
-        """Запуск Telegram бота с автоматическим перезапуском"""
-        while True:
-            try:
-                logger.info("Запуск Telegram бота...")
-                telegram_adapter.run()
-            except Exception as e:
-                logger.error(f"Telegram бот упал с ошибкой: {e}")
-                logger.info("Перезапуск Telegram бота через 10 секунд...")
-                time.sleep(10)
+        logger.info("Запуск Telegram бота (без автоперезапуска)")
+        telegram_adapter.run()
 
     # Запускаем оба бота в отдельных потоках с автоматическим перезапуском
     vk_thread = threading.Thread(target=run_vk, daemon=True)
