@@ -1512,33 +1512,20 @@ def main():
     bot_core.register_adapter(Platform.TELEGRAM, telegram_adapter)
     bot_core.register_adapter(Platform.VK, vk_adapter)
 
+    # VK бот запускается в отдельном потоке
     def run_vk():
-        logger.info("Запуск VK бота (без автоперезапуска)")
+        logger.info("Запуск VK бота (в отдельном потоке)")
         vk_adapter.run()
 
-    def run_telegram():
-        logger.info("Запуск Telegram бота (без автоперезапуска)")
-        telegram_adapter.run()
-
-    # Запускаем оба бота в отдельных потоках с автоматическим перезапуском
     vk_thread = threading.Thread(target=run_vk, daemon=True)
-    telegram_thread = threading.Thread(target=run_telegram, daemon=True)
-
     vk_thread.start()
-    telegram_thread.start()
 
-    logger.info("✅ Оба бота запущены в режиме автоматического перезапуска!")
-    logger.info("📱 VK бот работает в отдельном потоке")
-    logger.info("📱 Telegram бот работает в отдельном потоке")
-    logger.info("🔄 Боты автоматически перезапустятся при любых ошибках")
-
-    # Главный поток ждет завершения (которого никогда не будет)
+    # Telegram бот запускается в главном потоке
+    logger.info("Запуск Telegram бота (в главном потоке)")
     try:
-        while True:
-            time.sleep(1)
+        telegram_adapter.run()  # run_polling() создаст event loop автоматически
     except KeyboardInterrupt:
         logger.info("\n🛑 Получен сигнал прерывания. Остановка ботов...")
-
 
 if __name__ == "__main__":
     main()
